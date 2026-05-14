@@ -1,0 +1,13 @@
+{
+  "name": "שניים מקרא ואחד תרגום",
+  "short_name": "שמו״ת",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
