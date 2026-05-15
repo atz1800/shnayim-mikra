@@ -233,12 +233,16 @@ a { color: inherit; text-decoration: none; }
 .bs-prog-n { font-family: 'Frank Ruhl Libre', serif; font-size: 0.8rem; font-weight: 700; line-height: 1; }
 .bs-prog-l { font-size: 0.52rem; color: var(--text-3); }
 .btn-sefaria {
-  display: flex; align-items: center; gap: 0.3rem;
-  background: #f0f8f0; border: 1px solid #b8d8b8; border-radius: var(--radius-md);
-  padding: 0.28rem 0.65rem; font-size: 0.65rem; font-weight: 600; color: #1a6040;
+  display: flex; align-items: center; gap: 0.25rem;
+  border: 1px solid; border-radius: var(--radius-md);
+  padding: 0.26rem 0.6rem; font-size: 0.63rem; font-weight: 600;
   cursor: pointer; text-decoration: none; transition: all .12s; white-space: nowrap;
 }
-.btn-sefaria:hover { background: #d8f0d8; }
+.btn-sefaria.text { background: #f0f8f0; border-color: #b8d8b8; color: #1a6040; }
+.btn-sefaria.text:hover { background: #d8f0d8; }
+.btn-sefaria.targ { background: #fdf6e0; border-color: #e0c870; color: #7a5808; }
+.btn-sefaria.targ:hover { background: #fce8a0; }
+.bs-links { display: flex; gap: 0.4rem; flex-shrink: 0; }
 .btn-close {
   background: var(--bg); border: none; border-radius: var(--radius-md);
   width: 30px; height: 30px; cursor: pointer; font-size: 1rem; color: var(--text-2);
@@ -294,7 +298,7 @@ a { color: inherit; text-decoration: none; }
 .act-btn.tg.off { background: #fdf8ee; border-color: #e8d880; color: #9aabcc; }
 .act-btn.tg.off:hover { border-color: #c8980a; background: #fceea8; color: #8a6010; }
 .act-btn.tg.on  { background: var(--gold); border-color: #9a6808; color: #fff; box-shadow: 0 1px 4px rgba(184,124,16,.4); }
-/* stop badge */
+/* stop / verse picker */
 .stop-wrap { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
 .btn-stop {
   background: none; border: 1px dashed var(--border); border-radius: var(--radius-md);
@@ -303,17 +307,25 @@ a { color: inherit; text-decoration: none; }
 }
 .btn-stop:hover { border-color: var(--gold); color: var(--gold); }
 .btn-stop.has-val { border-style: solid; border-color: #e8d080; background: #fdf8e0; color: #8a6010; font-weight: 600; }
-.stop-input-wrap { display: flex; align-items: center; gap: 0.2rem; }
-.stop-input {
-  width: 52px; height: 26px; border: 1.5px solid var(--gold); border-radius: var(--radius-md);
-  padding: 0 0.4rem; font-size: 0.72rem; text-align: center; outline: none; background: #fffaee;
-  color: var(--text);
+.btn-stop-clear {
+  background: none; border: none; color: var(--text-3); cursor: pointer;
+  font-size: 0.75rem; padding: 0.1rem; line-height: 1; transition: color .12s;
 }
-.btn-stop-ok {
-  background: var(--gold); border: none; border-radius: var(--radius-sm);
-  color: #fff; width: 22px; height: 22px; cursor: pointer; font-size: 0.75rem;
-  display: flex; align-items: center; justify-content: center;
+.btn-stop-clear:hover { color: #882010; }
+.verse-picker-wrap { padding: 0.35rem 0 0.1rem; }
+.verse-picker {
+  display: flex; gap: 0.28rem; overflow-x: auto; padding-block: 0.2rem;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
 }
+.verse-picker::-webkit-scrollbar { display: none; }
+.vchip {
+  min-width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid #e8d880;
+  background: #fdf8ee; color: #8a6010; font-size: 0.68rem; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  transition: all .12s; -webkit-tap-highlight-color: transparent;
+}
+.vchip:hover { background: #fce8a0; border-color: #c8980a; }
+.vchip.sel { background: var(--gold); border-color: #9a6808; color: #fff; }
 .aliya-check { font-size: 0.75rem; color: var(--gold); flex-shrink: 0; margin-inline-start: 0.1rem; }
 @media (max-width: 400px) {
   .act-btn { min-width: 32px; height: 30px; font-size: 0.68rem; padding: 0 0.4rem; }
@@ -366,7 +378,11 @@ const SEFARIA = {
   'כי תבוא':'Parashat_Ki_Tavo','נצבים':'Parashat_Nitzavim','וילך':'Parashat_Vayeilech',
   'האזינו':'Parashat_Haazinu','וזאת הברכה':'Parashat_Vezot_Haberakhah',
 };
-function seferiaUrl(name) {
+function seferiaTextUrl(name) {
+  const s = SEFARIA[name]; if (!s) return null;
+  return `https://www.sefaria.org.il/${s}?lang=he&aliyot=1`;
+}
+function seferiaTargumUrl(name) {
   const s = SEFARIA[name]; if (!s) return null;
   return `https://www.sefaria.org.il/${s}?lang=he&aliyot=1&with=Targum%20Onkelos`;
 }
@@ -423,37 +439,55 @@ async function fbLoad(uid) {
 
 /* AliyaRow — inside bottom sheet */
 function AliyaRow({ name, num, label, a, sc, onToggle, onStop }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const inputRef = useRef();
+  const [showPicker, setShowPicker] = useState(false);
   const lvl = aliyaDone(a);
+  const VERSES = Array.from({length:50},(_,i)=>i+1);
 
-  function openEdit() { setDraft(a.stop||''); setEditing(true); setTimeout(()=>inputRef.current?.focus(),50); }
-  function commitEdit() { onStop(name, num, draft.trim()); setEditing(false); }
+  function pickVerse(v) {
+    onStop(name, num, String(v));
+    setShowPicker(false);
+  }
+  function clearStop(e) {
+    e.stopPropagation();
+    onStop(name, num, '');
+    setShowPicker(false);
+  }
 
   return (
-    <div className="aliya-row">
-      <span className="aliya-idx">{num}</span>
-      <span className="aliya-name">{label}</span>
-      <div className="aliya-actions">
-        <button className={`act-btn r1 ${a.r1?'on':'off'}`} onClick={()=>onToggle(name,num,'r1')}>1</button>
-        <button className={`act-btn r2 ${a.r2?'on':'off'}`} onClick={()=>onToggle(name,num,'r2')}>2</button>
-        <button className={`act-btn tg ${a.tg?'on':'off'}`} onClick={()=>onToggle(name,num,'tg')}>תרג׳</button>
-      </div>
-      <div className="stop-wrap">
-        {editing ? (
-          <div className="stop-input-wrap">
-            <input ref={inputRef} className="stop-input" value={draft} onChange={e=>setDraft(e.target.value)}
-              placeholder="פס׳" onKeyDown={e=>{if(e.key==='Enter')commitEdit();if(e.key==='Escape')setEditing(false);}}
-              onBlur={commitEdit} type="text" inputMode="text" maxLength={10} />
-          </div>
-        ) : (
-          <button className={`btn-stop${a.stop?' has-val':''}`} onClick={openEdit} title="סמן מיקום עצירה">
+    <div>
+      <div className="aliya-row">
+        <span className="aliya-idx">{num}</span>
+        <span className="aliya-name">{label}</span>
+        <div className="aliya-actions">
+          <button className={`act-btn r1 ${a.r1?'on':'off'}`} onClick={()=>onToggle(name,num,'r1')}>1</button>
+          <button className={`act-btn r2 ${a.r2?'on':'off'}`} onClick={()=>onToggle(name,num,'r2')}>2</button>
+          <button className={`act-btn tg ${a.tg?'on':'off'}`} onClick={()=>onToggle(name,num,'tg')}>תרג׳</button>
+        </div>
+        <div className="stop-wrap">
+          <button
+            className={`btn-stop${a.stop?' has-val':''}`}
+            onClick={()=>setShowPicker(v=>!v)}
+            title="סמן פסוק עצירה"
+          >
             {a.stop ? `פס׳ ${a.stop}` : '📍'}
           </button>
-        )}
+          {a.stop && <button className="btn-stop-clear" onClick={clearStop} title="נקה">×</button>}
+        </div>
+        {lvl===3 && <span className="aliya-check">✓</span>}
       </div>
-      {lvl===3 && <span className="aliya-check">✓</span>}
+      {showPicker && (
+        <div className="verse-picker-wrap">
+          <div className="verse-picker">
+            {VERSES.map(v => (
+              <button
+                key={v}
+                className={`vchip${a.stop===String(v)?' sel':''}`}
+                onClick={()=>pickVerse(v)}
+              >{v}</button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -463,7 +497,6 @@ function BottomSheet({ name, sc, prog, onClose, onToggle, onBulk, onStop }) {
   const aliyaData = prog[name] || {};
   const { done, total } = parshaStats(prog, name);
   const pct = Math.round(done/total*100);
-  const url = seferiaUrl(name);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -483,11 +516,14 @@ function BottomSheet({ name, sc, prog, onClose, onToggle, onBulk, onStop }) {
             <span className="bs-prog-n" style={{color:pct===100?'#b87c10':sc}}>{pct}%</span>
             <span className="bs-prog-l">{done}/{total}</span>
           </div>
-          {url && (
-            <a className="btn-sefaria" href={url} target="_blank" rel="noopener noreferrer">
-              📖 ספריא + תרגום
-            </a>
-          )}
+          <div className="bs-links">
+            {seferiaTextUrl(name) && (
+              <a className="btn-sefaria text" href={seferiaTextUrl(name)} target="_blank" rel="noopener noreferrer">📖 טקסט</a>
+            )}
+            {seferiaTargumUrl(name) && (
+              <a className="btn-sefaria targ" href={seferiaTargumUrl(name)} target="_blank" rel="noopener noreferrer">📜 תרגום</a>
+            )}
+          </div>
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
         <div className="bs-bulk">
