@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="שמו״ת">
-<meta name="theme-color" content="#faf8f3">
+<meta name="theme-color" content="#f5f5f7">
 <title>שניים מקרא ואחד תרגום</title>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,6 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <script src="https://unpkg.com/@hebcal/core@5.7.0/dist/bundle.min.js"></script>
+<script src="https://unpkg.com/framer-motion@10/dist/framer-motion.umd.js"></script>
 
 <script type="module" id="fb-init">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -34,309 +35,357 @@
 </script>
 
 <style>
-/* ── Reset & base ─────────────────────────────── */
+/* ── Reset ────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
 body {
-  font-family: 'Heebo', 'Segoe UI', Arial, sans-serif;
-  font-size: 1rem; line-height: 1.7;
-  word-spacing: 0.03em;
-  background: #f5f3ee;
-  color: #1c1a14;
+  font-family: 'Heebo', -apple-system, 'Segoe UI', sans-serif;
+  background: #f2f2f7;
+  color: #1d1d1f;
   min-height: 100dvh;
+  line-height: 1.5;
+  word-spacing: 0.02em;
 }
 input, button { font-family: inherit; }
 a { color: inherit; text-decoration: none; }
 
 /* ── Design tokens ────────────────────────────── */
 :root {
-  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px; --radius-xl: 22px;
-  --shadow-card: 0 1px 4px rgba(28,26,20,.06), 0 4px 16px rgba(28,26,20,.06);
-  --shadow-hover: 0 4px 8px rgba(28,26,20,.08), 0 8px 28px rgba(28,26,20,.1);
-  --shadow-sheet: 0 -4px 32px rgba(28,26,20,.18);
-  --border: #e4ddd0;
-  --surface: #ffffff;
-  --bg: #f5f3ee;
-  --text: #1c1a14;
-  --text-2: #6b5f4a;
-  --text-3: #a89880;
+  --text1: #1d1d1f;
+  --text2: #6e6e73;
+  --text3: #aeaeb2;
+  --bg: #f2f2f7;
+  --surface: rgba(255,255,255,0.82);
+  --surface-solid: #ffffff;
+  --border: rgba(0,0,0,0.06);
   --gold: #b87c10;
-  --gold-light: #f5e8c0;
+  --gold-grad: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.1);
+  --shadow-xl: 0 8px 32px rgba(0,0,0,0.1), 0 24px 64px rgba(0,0,0,0.12);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px; --radius-xl: 28px;
 }
 
-/* ── Header ───────────────────────────────────── */
-.app-bar {
+/* ── Sefer gradient themes ────────────────────── */
+.theme-bereshit { --sg: linear-gradient(135deg,#667eea,#764ba2); --sc: #5a4fcf; --sl: rgba(102,126,234,0.12); }
+.theme-shemot   { --sg: linear-gradient(135deg,#11998e,#38ef7d); --sc: #0d9488; --sl: rgba(17,153,142,0.12); }
+.theme-vayikra  { --sg: linear-gradient(135deg,#f093fb,#f5576c); --sc: #e53e6a; --sl: rgba(245,87,108,0.12); }
+.theme-bamidbar { --sg: linear-gradient(135deg,#4facfe,#00f2fe); --sc: #0ea5e9; --sl: rgba(79,172,254,0.12); }
+.theme-devarim  { --sg: linear-gradient(135deg,#f6d365,#fda085); --sc: #e8740a; --sl: rgba(253,160,133,0.12); }
+
+/* ── Glass card ───────────────────────────────── */
+.glass {
   background: var(--surface);
-  border-block-end: 1px solid var(--border);
-  padding: 0.6rem 1rem;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+
+/* ── App bar ──────────────────────────────────── */
+.app-bar {
   position: sticky; inset-block-start: 0; z-index: 90;
+  padding: 0.6rem 1.1rem;
   display: flex; align-items: center; gap: 0.75rem;
+  box-shadow: var(--shadow-sm);
+  background: rgba(242,242,247,0.85);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border-block-end: 1px solid var(--border);
 }
 .bar-brand { flex: 1; min-width: 0; }
 .bar-logo {
   font-family: 'Frank Ruhl Libre', serif;
-  font-size: 1.15rem; font-weight: 900;
-  letter-spacing: -0.01em; color: var(--text); line-height: 1;
+  font-size: 1.2rem; font-weight: 900; color: var(--text1);
+  background: linear-gradient(135deg, #1d1d1f 0%, #4a4a52 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-.bar-tagline { font-size: 0.68rem; color: var(--text-3); }
-.bar-end { display: flex; align-items: center; gap: 0.45rem; flex-shrink: 0; }
+.bar-tagline { font-size: 0.65rem; color: var(--text3); letter-spacing: 0.01em; }
+.bar-end { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 .badge-year {
-  background: var(--text); color: #e8c840;
-  font-family: 'Frank Ruhl Libre', serif; font-size: 0.62rem; font-weight: 700;
-  padding: 0.2rem 0.55rem; border-radius: var(--radius-sm); white-space: nowrap;
+  background: linear-gradient(135deg, #1d1d1f, #4a4a52);
+  color: #f6d365; font-family: 'Frank Ruhl Libre', serif;
+  font-size: 0.62rem; font-weight: 700; padding: 0.2rem 0.6rem;
+  border-radius: 999px; white-space: nowrap; box-shadow: var(--shadow-sm);
 }
 .btn-missing {
-  display: flex; align-items: center; gap: 0.25rem;
-  background: var(--surface); border: 1.5px solid #e0c8c0;
-  border-radius: var(--radius-md); padding: 0.22rem 0.6rem;
-  font-size: 0.65rem; font-weight: 600; color: #8b2020; cursor: pointer;
-  transition: all .15s; white-space: nowrap; line-height: 1.4;
+  display: flex; align-items: center; gap: 0.2rem;
+  background: rgba(255,255,255,0.7); border: 1px solid rgba(220,80,60,0.25);
+  border-radius: 999px; padding: 0.22rem 0.65rem;
+  font-size: 0.62rem; font-weight: 600; color: #c0392b; cursor: pointer;
+  transition: all .2s; backdrop-filter: blur(8px); white-space: nowrap;
 }
-.btn-missing.on { background: #8b2020; color: #fff; border-color: #8b2020; }
-.user-avatar { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); }
-.btn-icon {
-  background: none; border: none; cursor: pointer;
-  color: var(--text-3); font-size: 1rem; padding: 0.2rem;
-  border-radius: var(--radius-sm); transition: all .12s; line-height: 1;
-}
-.btn-icon:hover { background: var(--bg); color: var(--text); }
+.btn-missing.on { background: linear-gradient(135deg,#f5576c,#e53e6a); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(229,62,106,0.35); }
+.user-av { width: 28px; height: 28px; border-radius: 50%; box-shadow: var(--shadow-sm); border: 2px solid rgba(255,255,255,0.8); }
+.btn-icon { background: rgba(255,255,255,0.7); border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: var(--text2); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: all .15s; backdrop-filter: blur(8px); }
+.btn-icon:hover { background: rgba(255,255,255,0.95); color: var(--text1); }
 
 /* ── Stats strip ──────────────────────────────── */
 .stats-strip {
-  background: var(--surface); border-block-end: 1px solid var(--border);
-  padding: 0.55rem 1rem; display: flex; align-items: center; gap: 0; overflow-x: auto;
+  padding: 0.6rem 1.1rem;
+  display: flex; align-items: center; gap: 0; overflow-x: auto;
   scrollbar-width: none;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(20px);
+  border-block-end: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 .stats-strip::-webkit-scrollbar { display: none; }
-.stat { display: flex; flex-direction: column; align-items: center; padding: 0 0.85rem; }
-.stat-n {
-  font-family: 'Frank Ruhl Libre', serif; font-size: 1.15rem; font-weight: 900;
-  line-height: 1.1; color: var(--text);
-}
-.stat-l { font-size: 0.6rem; color: var(--text-3); white-space: nowrap; margin-top: 1px; }
-.stat-div { width: 1px; height: 30px; background: var(--border); flex-shrink: 0; }
-.stat-bar-wrap { flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 4px; padding: 0 0.85rem; }
-.stat-bar-track { height: 5px; background: #ede8de; border-radius: 3px; overflow: hidden; }
-.stat-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg,#3a5cc8,#b87c10); transition: width .6s ease; }
-.stat-bar-label { font-size: 0.58rem; color: var(--text-3); }
+.stat { display: flex; flex-direction: column; align-items: center; padding: 0.1rem 0.9rem; }
+.stat-n { font-family: 'Frank Ruhl Libre', serif; font-size: 1.2rem; font-weight: 900; line-height: 1.1; }
+.stat-l { font-size: 0.58rem; color: var(--text3); margin-top: 1px; white-space: nowrap; }
+.stat-div { width: 1px; height: 28px; background: var(--border); }
+.stat-bar-wrap { flex: 1; min-width: 100px; padding: 0 0.9rem; display: flex; flex-direction: column; gap: 4px; }
+.stat-bar-track { height: 6px; background: rgba(0,0,0,0.06); border-radius: 3px; overflow: hidden; }
+.stat-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg,#667eea,#f6d365,#fda085); transition: width .8s var(--ease-out); }
+.stat-bar-label { font-size: 0.58rem; color: var(--text3); }
 
 /* ── Sign-in ──────────────────────────────────── */
 .signin-bg {
   min-height: 100dvh; display: flex; align-items: center; justify-content: center;
-  padding: 1.5rem; background: linear-gradient(160deg, #f0eee8 0%, #e8f0f8 100%);
+  padding: 1.5rem; background: linear-gradient(160deg, #f0f4ff 0%, #f9f0ff 50%, #fff5f0 100%);
 }
 .signin-box {
-  background: var(--surface); border-radius: var(--radius-xl); padding: 2.5rem 1.8rem;
-  text-align: center; box-shadow: var(--shadow-hover); width: 100%; max-width: 310px;
+  background: rgba(255,255,255,0.85); backdrop-filter: blur(32px);
+  border-radius: var(--radius-xl); padding: 2.8rem 2rem;
+  text-align: center; box-shadow: var(--shadow-xl); width: 100%; max-width: 320px;
+  border: 1px solid rgba(255,255,255,0.9);
 }
-.signin-icon { font-family: 'Frank Ruhl Libre', serif; font-size: 3.5rem; font-weight: 900; line-height: 1; margin-block-end: 0.25rem; }
-.signin-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.15rem; font-weight: 700; margin-block-end: 0.5rem; }
-.signin-desc { font-size: 0.85rem; color: var(--text-2); line-height: 1.75; margin-block-end: 2rem; }
+.signin-icon {
+  font-family: 'Frank Ruhl Libre', serif; font-size: 3.8rem; font-weight: 900; line-height: 1;
+  background: linear-gradient(135deg,#667eea,#764ba2,#fda085);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-block-end: 0.2rem;
+}
+.signin-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.1rem; font-weight: 700; color: var(--text1); margin-block-end: 0.5rem; }
+.signin-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.7; margin-block-end: 2rem; }
 .btn-google {
-  display: flex; align-items: center; justify-content: center; gap: 0.6rem; width: 100%;
-  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg);
-  padding: 0.8rem 1rem; font-size: 0.9rem; font-weight: 600; color: var(--text);
-  cursor: pointer; box-shadow: var(--shadow-card); transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 0.65rem; width: 100%;
+  background: var(--surface-solid); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius-md);
+  padding: 0.85rem 1rem; font-size: 0.9rem; font-weight: 600; color: var(--text1);
+  cursor: pointer; box-shadow: var(--shadow-md); transition: all .2s var(--spring);
 }
-.btn-google:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+.btn-google:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.btn-google:active { transform: scale(0.97); }
 
-/* ── Main / Sefer sections ────────────────────── */
-.main { max-width: 900px; margin: 0 auto; padding: 1rem 0.9rem 5rem; }
+/* ── Main layout ──────────────────────────────── */
+.main { max-width: 900px; margin: 0 auto; padding: 1.2rem 1rem 5rem; }
 .filter-notice {
   display: flex; align-items: center; justify-content: space-between;
-  background: #fff5f0; border: 1.5px solid #f0c8b8; border-radius: var(--radius-md);
-  padding: 0.5rem 0.9rem; margin-block-end: 1rem;
-  font-size: 0.75rem; font-weight: 600; color: #882010;
+  background: rgba(229,62,106,0.08); backdrop-filter: blur(8px);
+  border: 1px solid rgba(229,62,106,0.2); border-radius: var(--radius-md);
+  padding: 0.55rem 1rem; margin-block-end: 1rem;
+  font-size: 0.75rem; font-weight: 600; color: #c0392b;
 }
-.sefer-section { margin-block-end: 0.9rem; }
+
+/* ── Sefer section ────────────────────────────── */
+.sefer-section { margin-block-end: 1.2rem; }
 .sefer-hdr {
-  display: flex; align-items: center; gap: 0.55rem;
-  padding: 0.55rem 0.3rem; cursor: pointer; user-select: none;
-  border-radius: var(--radius-md); transition: background .1s;
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.4rem; cursor: pointer; user-select: none;
+  border-radius: var(--radius-md); transition: background .15s;
 }
-.sefer-hdr:hover { background: rgba(255,255,255,.7); }
-.sefer-pip { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.sefer-label { font-family: 'Frank Ruhl Libre', serif; font-size: 1.05rem; font-weight: 700; }
-.sefer-pct { font-size: 0.65rem; color: var(--text-3); margin-inline-end: auto; }
-.sefer-chevron { color: var(--text-3); font-size: 0.65rem; transition: transform .2s; display: inline-block; }
+.sefer-hdr:hover { background: rgba(255,255,255,0.5); }
+.sefer-pip-wrap { position: relative; width: 32px; height: 32px; flex-shrink: 0; }
+.sefer-pip {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--sg); box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex; align-items: center; justify-content: center;
+}
+.sefer-pip-letter { font-family: 'Frank Ruhl Libre', serif; font-size: 0.75rem; font-weight: 900; color: rgba(255,255,255,0.95); }
+.sefer-label { font-family: 'Frank Ruhl Libre', serif; font-size: 1.08rem; font-weight: 700; color: var(--sc); }
+.sefer-pct { font-size: 0.62rem; color: var(--text3); margin-inline-end: auto; }
+.sefer-chevron { color: var(--text3); font-size: 0.65rem; transition: transform .25s var(--spring); display: inline-block; }
 .sefer-chevron.open { transform: rotate(180deg); }
-.sefer-prog { height: 3px; background: #ede8de; border-radius: 2px; margin-block-end: 0.75rem; overflow: hidden; }
-.sefer-prog-fill { height: 100%; border-radius: 2px; transition: width .4s ease; opacity: .65; }
+.sefer-bar { height: 4px; background: rgba(0,0,0,0.06); border-radius: 2px; margin-block-end: 0.8rem; overflow: hidden; }
+.sefer-bar-fill { height: 100%; border-radius: 2px; background: var(--sg); transition: width .5s var(--ease-out); opacity: 0.75; }
 
 /* ── Parasha grid ─────────────────────────────── */
-.parasha-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px,1fr)); gap: 0.65rem; }
+.parasha-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px,1fr)); gap: 0.65rem; }
 @media (max-width: 420px) { .parasha-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; } }
 
 /* ── Parasha card ─────────────────────────────── */
 .p-card {
-  background: var(--surface); border: 1.5px solid var(--border);
-  border-radius: var(--radius-lg); padding: 0.85rem 0.75rem 0.7rem;
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.75);
+  border-radius: var(--radius-lg); padding: 0.9rem 0.8rem 0.75rem;
   cursor: pointer; position: relative; overflow: hidden;
-  box-shadow: var(--shadow-card); transition: box-shadow .15s, transform .15s, border-color .15s;
-  border-inline-start: 3.5px solid transparent;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .2s; /* Framer handles transform */
 }
-.p-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); border-inline-start-color: var(--sc); }
-.p-card.is-current { border-color: var(--sc); border-inline-start-color: var(--sc); }
-.p-card.is-complete { background: #fffdf5; border-color: #d4a830; border-inline-start-color: var(--gold); }
-.p-card.missing { border-color: #e8c4b8; border-inline-start-color: #c04030; }
+.p-card::before {
+  content: ''; position: absolute;
+  inset-inline-start: 0; inset-block-start: 0; inset-block-end: 0;
+  width: 3px; background: var(--sg); border-radius: 0 0 0 0; opacity: 0; transition: opacity .2s;
+}
+.p-card.has-prog::before { opacity: 1; }
+.p-card.is-complete { background: rgba(255,252,230,0.88); }
 .now-chip {
   position: absolute; inset-block-start: 0.4rem; inset-inline-end: 0.4rem;
-  background: var(--sc); color: #fff;
-  font-size: 0.5rem; font-weight: 700; padding: 0.12rem 0.35rem; border-radius: 4px; white-space: nowrap;
+  font-size: 0.48rem; font-weight: 800; padding: 0.12rem 0.4rem; border-radius: 999px;
+  background: var(--sg); color: #fff; letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 .p-name {
-  font-family: 'Frank Ruhl Libre', serif; font-size: 1rem; font-weight: 700;
-  color: var(--text); margin-block-end: 0.55rem; padding-inline-end: 2rem; line-height: 1.3;
+  font-family: 'Frank Ruhl Libre', serif; font-size: 0.95rem; font-weight: 700;
+  color: var(--text1); margin-block-end: 0.55rem; padding-inline-end: 1.8rem; line-height: 1.3;
 }
-.p-dots { display: flex; gap: 3px; margin-block-end: 0.45rem; }
+.p-dots { display: flex; gap: 3px; margin-block-end: 0.45rem; flex-wrap: wrap; }
 .p-dot {
-  width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid; flex-shrink: 0;
-  transition: all .12s;
+  width: 13px; height: 13px; border-radius: 50%; transition: all .2s; flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
 }
-.p-dot.d0 { background: #eceae3; border-color: #ccc8bc; }
-.p-dot.d1 { background: #ddeaff; border-color: #90b0f0; }
-.p-dot.d2 { background: var(--sc,#4a67c8); border-color: color-mix(in srgb, var(--sc,#4a67c8) 80%, #000); }
-.p-dot.d3 { background: var(--gold); border-color: color-mix(in srgb, var(--gold) 80%, #000); }
-.p-prog { height: 3px; background: #eceae3; border-radius: 2px; overflow: hidden; }
-.p-prog-fill { height: 100%; border-radius: 2px; transition: width .3s ease; }
+.p-dot.d0 { background: rgba(0,0,0,0.07); }
+.p-dot.d1 { background: rgba(var(--sc-rgb,100,130,220),0.25); border: 1.5px solid rgba(var(--sc-rgb,100,130,220),0.5); }
+.p-dot.d2 { background: var(--sc,#4a67c8); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.p-dot.d3 { background: var(--gold-grad); box-shadow: 0 1px 4px rgba(184,124,16,0.4); }
+.p-prog { height: 3px; background: rgba(0,0,0,0.06); border-radius: 2px; overflow: hidden; }
+.p-prog-fill { height: 100%; border-radius: 2px; transition: width .4s var(--ease-out); }
 
 /* ── Bottom sheet ─────────────────────────────── */
 .bs-overlay {
-  position: fixed; inset: 0; background: rgba(28,26,20,.45); z-index: 200;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  z-index: 200;
   display: flex; align-items: flex-end; justify-content: center;
-  animation: bsFadeIn .18s ease;
 }
-@keyframes bsFadeIn { from { opacity: 0; } to { opacity: 1; } }
 .bs-sheet {
-  background: var(--surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  width: 100%; max-width: 600px; max-height: 88dvh; overflow-y: auto;
-  box-shadow: var(--shadow-sheet);
-  animation: bsSlideUp .26s cubic-bezier(.32,1.28,.56,1);
+  background: rgba(252,252,254,0.96);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100%; max-width: 620px; max-height: 90dvh; overflow-y: auto;
+  border: 1px solid rgba(255,255,255,0.8);
+  border-block-end: none;
+  box-shadow: 0 -8px 48px rgba(0,0,0,0.15), 0 -2px 12px rgba(0,0,0,0.08);
   overscroll-behavior: contain;
 }
-@keyframes bsSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.bs-handle {
-  width: 40px; height: 4px; border-radius: 2px; background: var(--border);
-  margin: 0.7rem auto 0; flex-shrink: 0;
-}
+.bs-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.12); margin: 0.8rem auto 0; }
 .bs-head {
-  display: flex; align-items: center; gap: 0.7rem;
-  padding: 0.9rem 1.1rem 0.6rem; border-block-end: 1px solid var(--border);
-  position: sticky; inset-block-start: 0; background: var(--surface); z-index: 1;
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.9rem 1.1rem 0.7rem;
+  border-block-end: 1px solid rgba(0,0,0,0.06);
+  position: sticky; inset-block-start: 0; background: rgba(252,252,254,0.95); z-index: 1;
+  backdrop-filter: blur(20px);
 }
-.bs-title {
-  font-family: 'Frank Ruhl Libre', serif; font-size: 1.35rem; font-weight: 900; flex: 1;
+.bs-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.45rem; font-weight: 900; flex: 1; }
+.bs-prog { display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0; }
+.bs-prog-n { font-family: 'Frank Ruhl Libre', serif; font-size: 0.85rem; font-weight: 900; line-height: 1; }
+.bs-prog-l { font-size: 0.52rem; color: var(--text3); }
+.bs-links { display: flex; gap: 0.35rem; flex-shrink: 0; }
+.btn-link {
+  display: flex; align-items: center; gap: 0.2rem; border: none;
+  border-radius: 999px; padding: 0.28rem 0.65rem;
+  font-size: 0.62rem; font-weight: 700; cursor: pointer;
+  text-decoration: none; transition: all .15s; white-space: nowrap;
+  box-shadow: var(--shadow-sm);
 }
-.bs-prog-ring {
-  display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0;
-}
-.bs-prog-n { font-family: 'Frank Ruhl Libre', serif; font-size: 0.8rem; font-weight: 700; line-height: 1; }
-.bs-prog-l { font-size: 0.52rem; color: var(--text-3); }
-.btn-sefaria {
-  display: flex; align-items: center; gap: 0.25rem;
-  border: 1px solid; border-radius: var(--radius-md);
-  padding: 0.26rem 0.6rem; font-size: 0.63rem; font-weight: 600;
-  cursor: pointer; text-decoration: none; transition: all .12s; white-space: nowrap;
-}
-.btn-sefaria.text { background: #f0f8f0; border-color: #b8d8b8; color: #1a6040; }
-.btn-sefaria.text:hover { background: #d8f0d8; }
-.btn-sefaria.targ { background: #fdf6e0; border-color: #e0c870; color: #7a5808; }
-.btn-sefaria.targ:hover { background: #fce8a0; }
-.bs-links { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.btn-link.text { background: linear-gradient(135deg,#43e97b,#38f9d7); color: #0a4a30; }
+.btn-link.targ { background: var(--gold-grad); color: #5a2e00; }
+.btn-link:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .btn-close {
-  background: var(--bg); border: none; border-radius: var(--radius-md);
-  width: 30px; height: 30px; cursor: pointer; font-size: 1rem; color: var(--text-2);
+  background: rgba(0,0,0,0.06); border: none; border-radius: 50%;
+  width: 30px; height: 30px; cursor: pointer; font-size: 0.9rem; color: var(--text2);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  transition: all .12s;
+  transition: all .15s;
 }
-.btn-close:hover { background: #ede8de; color: var(--text); }
-.bs-bulk {
-  display: flex; gap: 0.35rem; padding: 0.6rem 1.1rem;
-  border-block-end: 1px solid var(--border); flex-wrap: wrap;
-}
-.bulk-btn {
-  flex: 1; min-width: 0; height: 28px; border-radius: 999px; border: 1.5px solid;
-  font-size: 0.62rem; font-weight: 700; cursor: pointer; transition: all .12s;
-  display: flex; align-items: center; justify-content: center; gap: 0.18rem; white-space: nowrap;
-  padding: 0 0.6rem;
-}
-.bulk-btn.b1 { background: #eef4ff; border-color: #c0d4f8; color: #1a3888; }
-.bulk-btn.b1:hover { background: #d4e8ff; }
-.bulk-btn.b2 { background: #e8eeff; border-color: #b0c4f4; color: #2a4898; }
-.bulk-btn.b2:hover { background: #c8daff; }
-.bulk-btn.bt { background: #fdf5e0; border-color: #e0c870; color: #8a6010; }
-.bulk-btn.bt:hover { background: #fce8a0; }
-.bulk-btn.bx { background: #fff4f0; border-color: #f0c4b8; color: #882010; }
-.bulk-btn.bx:hover { background: #ffd8cc; }
-.bs-body { padding: 0.4rem 1.1rem 1.5rem; }
+.btn-close:hover { background: rgba(0,0,0,0.12); color: var(--text1); }
 
-/* ── Aliya rows ───────────────────────────────── */
+/* ── Bulk actions ─────────────────────────────── */
+.bs-bulk { display: flex; gap: 0.35rem; padding: 0.65rem 1.1rem; flex-wrap: wrap; border-block-end: 1px solid rgba(0,0,0,0.05); }
+.bulk-btn {
+  flex: 1; min-width: 0; height: 30px; border-radius: 999px; border: none;
+  font-size: 0.62rem; font-weight: 700; cursor: pointer; transition: all .15s var(--spring);
+  display: flex; align-items: center; justify-content: center; gap: 0.15rem;
+  white-space: nowrap; padding: 0 0.65rem; box-shadow: var(--shadow-sm);
+}
+.bulk-btn.b1 { background: linear-gradient(135deg,#dce8ff,#c4d8f8); color: #1a3888; }
+.bulk-btn.b2 { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; }
+.bulk-btn.bt { background: var(--gold-grad); color: #3a1800; }
+.bulk-btn.bx { background: linear-gradient(135deg,#ffecd2,#fcb69f); color: #7a2010; }
+.bulk-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.bulk-btn:active { transform: scale(0.96); }
+.bs-body { padding: 0.4rem 1.1rem 1.8rem; }
+
+/* ── Aliya row ────────────────────────────────── */
 .aliya-row {
   display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.5rem 0; border-block-end: 1px solid #f0ece4;
-  min-height: 48px;
+  padding: 0.55rem 0; border-block-end: 1px solid rgba(0,0,0,0.04);
+  min-height: 50px;
 }
 .aliya-row:last-child { border-block-end: none; }
-.aliya-idx { font-size: 0.65rem; font-weight: 700; color: var(--text-3); min-width: 18px; text-align: center; }
-.aliya-name { font-size: 0.8rem; color: var(--text-2); min-width: 46px; }
+.aliya-idx {
+  width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.05);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.62rem; font-weight: 700; color: var(--text3); flex-shrink: 0;
+}
+.aliya-name { font-size: 0.78rem; color: var(--text2); min-width: 44px; }
 .aliya-actions { display: flex; gap: 0.3rem; margin-inline-end: auto; }
 .act-btn {
-  height: 32px; min-width: 36px; border-radius: 999px; border: 1.5px solid;
-  font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all .12s;
-  display: flex; align-items: center; justify-content: center; padding: 0 0.5rem;
-  user-select: none; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+  height: 33px; min-width: 38px; border-radius: 999px; border: none;
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 0 0.55rem;
+  display: flex; align-items: center; justify-content: center;
+  user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: box-shadow .15s;
 }
-/* reading 1 */
-.act-btn.r1.off { background: #f4f8ff; border-color: #c8d8f4; color: #9aabcc; }
-.act-btn.r1.off:hover { border-color: #7aaaf0; background: #dceeff; color: #1a3888; }
-.act-btn.r1.on  { background: #dce8ff; border-color: #80aaf0; color: #1a3888; box-shadow: inset 0 1px 2px rgba(26,56,136,.12); }
-/* reading 2 */
-.act-btn.r2.off { background: #f4f8ff; border-color: #c8d8f4; color: #9aabcc; }
-.act-btn.r2.off:hover { border-color: #4a67c8; background: #dce8ff; color: #2a4898; }
-.act-btn.r2.on  { background: #4a67c8; border-color: #3a57b8; color: #fff; box-shadow: 0 1px 4px rgba(74,103,200,.35); }
-/* targum */
-.act-btn.tg.off { background: #fdf8ee; border-color: #e8d880; color: #9aabcc; }
-.act-btn.tg.off:hover { border-color: #c8980a; background: #fceea8; color: #8a6010; }
-.act-btn.tg.on  { background: var(--gold); border-color: #9a6808; color: #fff; box-shadow: 0 1px 4px rgba(184,124,16,.4); }
-/* stop / verse picker */
-.stop-wrap { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+.act-btn.r1.off { background: rgba(102,126,234,0.1); color: rgba(90,79,207,0.5); }
+.act-btn.r1.off:hover { background: rgba(102,126,234,0.2); color: #5a4fcf; }
+.act-btn.r1.on { background: linear-gradient(135deg,#667eea,#8b74f0); color: #fff; box-shadow: 0 2px 8px rgba(102,126,234,0.45); }
+.act-btn.r2.off { background: rgba(102,126,234,0.08); color: rgba(90,79,207,0.4); }
+.act-btn.r2.off:hover { background: rgba(102,126,234,0.18); color: #5a4fcf; }
+.act-btn.r2.on { background: linear-gradient(135deg,#5a4fcf,#764ba2); color: #fff; box-shadow: 0 2px 8px rgba(90,79,207,0.45); }
+.act-btn.tg.off { background: rgba(253,160,133,0.12); color: rgba(180,100,20,0.5); }
+.act-btn.tg.off:hover { background: rgba(253,160,133,0.25); color: #b46414; }
+.act-btn.tg.on { background: var(--gold-grad); color: #3a1800; box-shadow: 0 2px 8px rgba(253,160,133,0.5); }
+/* stop */
+.stop-wrap { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
 .btn-stop {
-  background: none; border: 1px dashed var(--border); border-radius: var(--radius-md);
-  padding: 0.18rem 0.45rem; font-size: 0.62rem; color: var(--text-3); cursor: pointer;
-  transition: all .12s; white-space: nowrap; line-height: 1.4;
+  background: rgba(0,0,0,0.05); border: none; border-radius: 999px;
+  padding: 0.2rem 0.5rem; font-size: 0.62rem; color: var(--text3); cursor: pointer;
+  transition: all .15s; white-space: nowrap;
 }
-.btn-stop:hover { border-color: var(--gold); color: var(--gold); }
-.btn-stop.has-val { border-style: solid; border-color: #e8d080; background: #fdf8e0; color: #8a6010; font-weight: 600; }
-.btn-stop-clear {
-  background: none; border: none; color: var(--text-3); cursor: pointer;
-  font-size: 0.75rem; padding: 0.1rem; line-height: 1; transition: color .12s;
-}
-.btn-stop-clear:hover { color: #882010; }
-.verse-picker-wrap { padding: 0.35rem 0 0.1rem; }
+.btn-stop:hover { background: rgba(246,211,101,0.2); color: var(--gold); }
+.btn-stop.has-val { background: linear-gradient(135deg,rgba(246,211,101,0.2),rgba(253,160,133,0.2)); color: #8a5010; font-weight: 600; }
+.btn-stop-clear { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.8rem; padding: 0.1rem; transition: color .12s; }
+.btn-stop-clear:hover { color: #c0392b; }
+.aliya-check { font-size: 0.7rem; flex-shrink: 0; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; }
+
+/* ── Verse picker ─────────────────────────────── */
+.verse-picker-wrap { overflow: hidden; }
 .verse-picker {
-  display: flex; gap: 0.28rem; overflow-x: auto; padding-block: 0.2rem;
+  display: flex; gap: 0.28rem; overflow-x: auto; padding: 0.5rem 0 0.3rem;
   scrollbar-width: none; -webkit-overflow-scrolling: touch;
 }
 .verse-picker::-webkit-scrollbar { display: none; }
 .vchip {
-  min-width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid #e8d880;
-  background: #fdf8ee; color: #8a6010; font-size: 0.68rem; font-weight: 700;
-  cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-  transition: all .12s; -webkit-tap-highlight-color: transparent;
+  min-width: 30px; height: 30px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,0.05); color: var(--text2); font-family: 'Frank Ruhl Libre', serif;
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s var(--spring); -webkit-tap-highlight-color: transparent;
 }
-.vchip:hover { background: #fce8a0; border-color: #c8980a; }
-.vchip.sel { background: var(--gold); border-color: #9a6808; color: #fff; }
-.aliya-check { font-size: 0.75rem; color: var(--gold); flex-shrink: 0; margin-inline-start: 0.1rem; }
-@media (max-width: 400px) {
-  .act-btn { min-width: 32px; height: 30px; font-size: 0.68rem; padding: 0 0.4rem; }
-  .aliya-name { font-size: 0.72rem; min-width: 38px; }
-  .bs-head { padding: 0.8rem 0.8rem 0.5rem; }
-  .bs-body, .bs-bulk { padding-inline: 0.8rem; }
+.vchip:hover { background: rgba(246,211,101,0.25); color: #8a5010; transform: scale(1.1); }
+.vchip:active { transform: scale(0.92); }
+.vchip.sel { background: var(--gold-grad); color: #3a1800; box-shadow: 0 2px 8px rgba(253,160,133,0.45); transform: scale(1.12); }
+
+/* ── Loading ──────────────────────────────────── */
+.loading {
+  min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+  color: var(--text3); font-size: 0.95rem;
+  background: linear-gradient(160deg,#f0f4ff,#f9f0ff,#fff5f0);
 }
-/* ── Misc ─────────────────────────────────────── */
-.loading { min-height: 100dvh; display: flex; align-items: center; justify-content: center; color: var(--text-3); }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: #ccc4b4; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+@media (max-width: 400px) {
+  .act-btn { min-width: 34px; height: 30px; font-size: 0.68rem; }
+  .aliya-name { font-size: 0.72rem; min-width: 38px; }
+  .bs-head, .bs-body, .bs-bulk { padding-inline: 0.85rem; }
+}
 </style>
 </head>
 <body>
@@ -344,288 +393,229 @@ a { color: inherit; text-decoration: none; }
 <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
+const FM = window.FramerMotion || {};
+const motion = FM.motion || { div:'div', button:'button' };
+const AnimatePresence = FM.AnimatePresence || (({children})=>children);
 
 /* ═══ DATA ════════════════════════════════════ */
 const SFARIM = [
-  { id:'bereshit', name:'בראשית', color:'#1e4fa0', parshiot:['בראשית','נח','לך לך','וירא','חיי שרה','תולדות','ויצא','וישלח','וישב','מקץ','ויגש','ויחי'] },
-  { id:'shemot',   name:'שמות',   color:'#1a6845', parshiot:['שמות','וארא','בא','בשלח','יתרו','משפטים','תרומה','תצוה','כי תשא','ויקהל','פקודי'] },
-  { id:'vayikra',  name:'ויקרא',  color:'#882018', parshiot:['ויקרא','צו','שמיני','תזריע','מצורע','אחרי מות','קדושים','אמור','בהר','בחוקותי'] },
-  { id:'bamidbar', name:'במדבר',  color:'#5c3090', parshiot:['במדבר','נשא','בהעלותך','שלח','קרח','חוקת','בלק','פינחס','מטות','מסעי'] },
-  { id:'devarim',  name:'דברים',  color:'#9a5808', parshiot:['דברים','ואתחנן','עקב','ראה','שופטים','כי תצא','כי תבוא','נצבים','וילך','האזינו','וזאת הברכה'] },
+  { id:'bereshit', name:'בראשית', theme:'theme-bereshit', letter:'ב', parshiot:['בראשית','נח','לך לך','וירא','חיי שרה','תולדות','ויצא','וישלח','וישב','מקץ','ויגש','ויחי'] },
+  { id:'shemot',   name:'שמות',   theme:'theme-shemot',   letter:'ש', parshiot:['שמות','וארא','בא','בשלח','יתרו','משפטים','תרומה','תצוה','כי תשא','ויקהל','פקודי'] },
+  { id:'vayikra',  name:'ויקרא',  theme:'theme-vayikra',  letter:'ו', parshiot:['ויקרא','צו','שמיני','תזריע','מצורע','אחרי מות','קדושים','אמור','בהר','בחוקותי'] },
+  { id:'bamidbar', name:'במדבר',  theme:'theme-bamidbar', letter:'נ', parshiot:['במדבר','נשא','בהעלותך','שלח','קרח','חוקת','בלק','פינחס','מטות','מסעי'] },
+  { id:'devarim',  name:'דברים',  theme:'theme-devarim',  letter:'ד', parshiot:['דברים','ואתחנן','עקב','ראה','שופטים','כי תצא','כי תבוא','נצבים','וילך','האזינו','וזאת הברכה'] },
 ];
-
 const ALIYA_LABELS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי'];
-
-/* ספריא links */
 const SEFARIA = {
-  'בראשית':'Parashat_Bereshit','נח':'Parashat_Noach','לך לך':'Parashat_Lech-Lecha',
-  'וירא':'Parashat_Vayera','חיי שרה':'Parashat_Chayei_Sara','תולדות':'Parashat_Toldot',
-  'ויצא':'Parashat_Vayetzei','וישלח':'Parashat_Vayishlach','וישב':'Parashat_Vayeshev',
-  'מקץ':'Parashat_Miketz','ויגש':'Parashat_Vayigash','ויחי':'Parashat_Vayechi',
-  'שמות':'Parashat_Shemot','וארא':'Parashat_Vaera','בא':'Parashat_Bo',
-  'בשלח':'Parashat_Beshalach','יתרו':'Parashat_Yitro','משפטים':'Parashat_Mishpatim',
-  'תרומה':'Parashat_Terumah','תצוה':'Parashat_Tetzaveh','כי תשא':'Parashat_Ki_Tisa',
-  'ויקהל':'Parashat_Vayakhel','פקודי':'Parashat_Pekudei',
-  'ויקרא':'Parashat_Vayikra','צו':'Parashat_Tzav','שמיני':'Parashat_Shemini',
-  'תזריע':'Parashat_Tazria','מצורע':'Parashat_Metzora','אחרי מות':'Parashat_Achrei_Mot',
-  'קדושים':'Parashat_Kedoshim','אמור':'Parashat_Emor','בהר':'Parashat_Behar',
-  'בחוקותי':'Parashat_Bechukotai','במדבר':'Parashat_Bamidbar','נשא':'Parashat_Nasso',
-  'בהעלותך':'Parashat_Beha\'alotcha','שלח':'Parashat_Shelach','קרח':'Parashat_Korach',
-  'חוקת':'Parashat_Chukat','בלק':'Parashat_Balak','פינחס':'Parashat_Pinchas',
-  'מטות':'Parashat_Matot','מסעי':'Parashat_Masei',
-  'דברים':'Parashat_Devarim','ואתחנן':'Parashat_Vaetchanan','עקב':'Parashat_Eikev',
-  'ראה':'Parashat_Reeh','שופטים':'Parashat_Shoftim','כי תצא':'Parashat_Ki_Teitzei',
-  'כי תבוא':'Parashat_Ki_Tavo','נצבים':'Parashat_Nitzavim','וילך':'Parashat_Vayeilech',
-  'האזינו':'Parashat_Haazinu','וזאת הברכה':'Parashat_Vezot_Haberakhah',
+  'בראשית':'Parashat_Bereshit','נח':'Parashat_Noach','לך לך':'Parashat_Lech-Lecha','וירא':'Parashat_Vayera','חיי שרה':'Parashat_Chayei_Sara','תולדות':'Parashat_Toldot','ויצא':'Parashat_Vayetzei','וישלח':'Parashat_Vayishlach','וישב':'Parashat_Vayeshev','מקץ':'Parashat_Miketz','ויגש':'Parashat_Vayigash','ויחי':'Parashat_Vayechi',
+  'שמות':'Parashat_Shemot','וארא':'Parashat_Vaera','בא':'Parashat_Bo','בשלח':'Parashat_Beshalach','יתרו':'Parashat_Yitro','משפטים':'Parashat_Mishpatim','תרומה':'Parashat_Terumah','תצוה':'Parashat_Tetzaveh','כי תשא':'Parashat_Ki_Tisa','ויקהל':'Parashat_Vayakhel','פקודי':'Parashat_Pekudei',
+  'ויקרא':'Parashat_Vayikra','צו':'Parashat_Tzav','שמיני':'Parashat_Shemini','תזריע':'Parashat_Tazria','מצורע':'Parashat_Metzora','אחרי מות':'Parashat_Achrei_Mot','קדושים':'Parashat_Kedoshim','אמור':'Parashat_Emor','בהר':'Parashat_Behar','בחוקותי':'Parashat_Bechukotai',
+  'במדבר':'Parashat_Bamidbar','נשא':'Parashat_Nasso','בהעלותך':"Parashat_Beha'alotcha",'שלח':'Parashat_Shelach','קרח':'Parashat_Korach','חוקת':'Parashat_Chukat','בלק':'Parashat_Balak','פינחס':'Parashat_Pinchas','מטות':'Parashat_Matot','מסעי':'Parashat_Masei',
+  'דברים':'Parashat_Devarim','ואתחנן':'Parashat_Vaetchanan','עקב':'Parashat_Eikev','ראה':'Parashat_Reeh','שופטים':'Parashat_Shoftim','כי תצא':'Parashat_Ki_Teitzei','כי תבוא':'Parashat_Ki_Tavo','נצבים':'Parashat_Nitzavim','וילך':'Parashat_Vayeilech','האזינו':'Parashat_Haazinu','וזאת הברכה':'Parashat_Vezot_Haberakhah',
 };
-function toHebNum(n) {
-  if (n === 15) return 'טו';
-  if (n === 16) return 'טז';
-  const ones = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
-  const tens = ['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
-  let r = '', x = n;
-  if (x >= 100) { r += ['','ק','ר','ש','ת'][Math.floor(x/100)]; x %= 100; }
-  if (x >= 10)  { r += tens[Math.floor(x/10)]; x %= 10; }
-  if (x > 0)    { r += ones[x]; }
-  return r;
-}
-
-function seferiaTextUrl(name) {
-  const s = SEFARIA[name]; if (!s) return null;
-  return `https://www.sefaria.org.il/${s}?lang=he&aliyot=1`;
-}
-function seferiaTargumUrl(name) {
-  const s = SEFARIA[name]; if (!s) return null;
-  return `https://www.sefaria.org.il/${s}?lang=he&aliyot=1&with=Targum%20Onkelos`;
-}
+const sefText = n => { const s=SEFARIA[n]; return s ? `https://www.sefaria.org.il/${s}?lang=he&aliyot=1` : null; };
+const sefTarg = n => { const s=SEFARIA[n]; return s ? `https://www.sefaria.org.il/${s}?lang=he&aliyot=1&with=Targum%20Onkelos` : null; };
 
 /* ═══ HELPERS ═════════════════════════════════ */
 function getHebrewYear() { try { return new window.hebcal.HDate(new Date()).getFullYear(); } catch { return 5786; } }
-function yearStr(y) {
-  return ({5783:'תשפ"ג',5784:'תשפ"ד',5785:'תשפ"ה',5786:'תשפ"ו',5787:'תשפ"ז',5788:'תשפ"ח'})[y] || String(y);
-}
+function yearStr(y) { return ({5783:'תשפ"ג',5784:'תשפ"ד',5785:'תשפ"ה',5786:'תשפ"ו',5787:'תשפ"ז',5788:'תשפ"ח'})[y]||String(y); }
 function detectParasha() {
   try {
-    const events = window.hebcal.HebrewCalendar.calendar({ start:new Date(), end:new Date(Date.now()+8*86400000), noHolidays:true, sedrot:true, il:false });
+    const events = window.hebcal.HebrewCalendar.calendar({start:new Date(),end:new Date(Date.now()+8*86400000),noHolidays:true,sedrot:true,il:false});
     for (const ev of events) {
-      const r = ev.render?.('he') || '';
-      if (r.startsWith('פרשת')) {
-        const n = r.replace('פרשת ','').trim();
-        for (const s of SFARIM) { const f = s.parshiot.find(p => p===n || n.startsWith(p)); if (f) return f; }
-      }
+      const r = ev.render?.('he')||''; if (!r.startsWith('פרשת')) continue;
+      const n = r.replace('פרשת ','').trim();
+      for (const s of SFARIM) { const f=s.parshiot.find(p=>p===n||n.startsWith(p)); if(f) return f; }
     }
-  } catch {}
-  return null;
+  } catch {} return null;
 }
-
-function aliyaDone(a) { if (!a) return 0; return (a.r1?1:0)+(a.r2?1:0)+(a.tg?1:0); }
-function parshaStats(prog, name) {
-  let done=0; for (let i=1;i<=7;i++) done+=aliyaDone((prog[name]||{})[i]); return {done,total:21};
+function toHebNum(n) {
+  if(n===15)return'טו'; if(n===16)return'טז';
+  const ones=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+  const tens=['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+  let r='',x=n;
+  if(x>=100){r+=['','ק','ר','ש','ת'][Math.floor(x/100)];x%=100;}
+  if(x>=10){r+=tens[Math.floor(x/10)];x%=10;}
+  if(x>0){r+=ones[x];} return r;
 }
-function seferStats(prog, sefer) {
-  let done=0; for (const p of sefer.parshiot) done+=parshaStats(prog,p).done; return {done,total:sefer.parshiot.length*21};
-}
-function globalStats(prog) {
+function aliyaDone(a){if(!a)return 0;return(a.r1?1:0)+(a.r2?1:0)+(a.tg?1:0);}
+function parshaStats(prog,name){let d=0;for(let i=1;i<=7;i++)d+=aliyaDone((prog[name]||{})[i]);return{done:d,total:21};}
+function seferStats(prog,sefer){let d=0;for(const p of sefer.parshiot)d+=parshaStats(prog,p).done;return{done:d,total:sefer.parshiot.length*21};}
+function globalStats(prog){
   let r1=0,r2=0,tg=0,complete=0,missing=0;
-  for (const s of SFARIM) for (const n of s.parshiot) {
-    let all=true; for (let i=1;i<=7;i++) { const a=(prog[n]||{})[i]||{}; if(a.r1)r1++; if(a.r2)r2++; if(a.tg)tg++; if(!a.r1||!a.r2||!a.tg)all=false; }
-    if(all)complete++; else missing++;
-  }
-  return {r1,r2,tg,complete,missing};
+  for(const s of SFARIM)for(const n of s.parshiot){
+    let all=true;for(let i=1;i<=7;i++){const a=(prog[n]||{})[i]||{};if(a.r1)r1++;if(a.r2)r2++;if(a.tg)tg++;if(!a.r1||!a.r2||!a.tg)all=false;}
+    if(all)complete++;else missing++;
+  } return{r1,r2,tg,complete,missing};
 }
 
 /* ═══ FIREBASE ════════════════════════════════ */
-async function fbSave(uid, prog) {
-  try { const {db,doc,setDoc}=window._fb; await setDoc(doc(db,'users',uid),{'mikra-progress':JSON.stringify(prog)},{merge:true}); }
-  catch(e) { console.error('save err',e); }
-}
-async function fbLoad(uid) {
-  try {
-    const {db,doc,getDoc}=window._fb; const snap=await getDoc(doc(db,'users',uid));
-    if (snap.exists()) { const r=snap.data()['mikra-progress']; return r?JSON.parse(r):{}; }
-    return {};
-  } catch(e) { console.error('load err',e); if(e.code==='permission-denied') alert('⚠️ Firebase: אין הרשאה. עדכן כללי Firestore.'); return null; }
+async function fbSave(uid,prog){try{const{db,doc,setDoc}=window._fb;await setDoc(doc(db,'users',uid),{'mikra-progress':JSON.stringify(prog)},{merge:true});}catch(e){console.error(e);}}
+async function fbLoad(uid){
+  try{const{db,doc,getDoc}=window._fb;const snap=await getDoc(doc(db,'users',uid));
+    if(snap.exists()){const r=snap.data()['mikra-progress'];return r?JSON.parse(r):{};}return{};
+  }catch(e){console.error(e);if(e.code==='permission-denied')alert('⚠️ Firebase: אין הרשאה. עדכן כללי Firestore.');return null;}
 }
 
 /* ═══ COMPONENTS ══════════════════════════════ */
 
-/* AliyaRow — inside bottom sheet */
-function AliyaRow({ name, num, label, a, sc, onToggle, onStop }) {
+function AliyaRow({ name, num, label, a, onToggle, onStop }) {
   const [showPicker, setShowPicker] = useState(false);
   const lvl = aliyaDone(a);
   const VERSES = Array.from({length:50},(_,i)=>i+1);
-
-  function pickVerse(v) {
-    onStop(name, num, toHebNum(v));
-    setShowPicker(false);
-  }
-  function clearStop(e) {
-    e.stopPropagation();
-    onStop(name, num, '');
-    setShowPicker(false);
-  }
-
+  function pickVerse(v){ onStop(name,num,toHebNum(v)); setShowPicker(false); }
+  function clearStop(e){ e.stopPropagation(); onStop(name,num,''); setShowPicker(false); }
   return (
     <div>
       <div className="aliya-row">
-        <span className="aliya-idx">{num}</span>
+        <div className="aliya-idx">{num}</div>
         <span className="aliya-name">{label}</span>
         <div className="aliya-actions">
-          <button className={`act-btn r1 ${a.r1?'on':'off'}`} onClick={()=>onToggle(name,num,'r1')}>1</button>
-          <button className={`act-btn r2 ${a.r2?'on':'off'}`} onClick={()=>onToggle(name,num,'r2')}>2</button>
-          <button className={`act-btn tg ${a.tg?'on':'off'}`} onClick={()=>onToggle(name,num,'tg')}>תרג׳</button>
+          <motion.button className={`act-btn r1 ${a.r1?'on':'off'}`} whileTap={{scale:0.88}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'r1')}>1</motion.button>
+          <motion.button className={`act-btn r2 ${a.r2?'on':'off'}`} whileTap={{scale:0.88}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'r2')}>2</motion.button>
+          <motion.button className={`act-btn tg ${a.tg?'on':'off'}`} whileTap={{scale:0.88}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'tg')}>תרג׳</motion.button>
         </div>
         <div className="stop-wrap">
-          <button
-            className={`btn-stop${a.stop?' has-val':''}`}
-            onClick={()=>setShowPicker(v=>!v)}
-            title="סמן פסוק עצירה"
-          >
+          <motion.button className={`btn-stop${a.stop?' has-val':''}`} whileTap={{scale:0.9}} onClick={()=>setShowPicker(v=>!v)} title="סמן פסוק עצירה">
             {a.stop ? `פס׳ ${a.stop}` : '📍'}
-          </button>
-          {a.stop && <button className="btn-stop-clear" onClick={clearStop} title="נקה">×</button>}
+          </motion.button>
+          {a.stop && <button className="btn-stop-clear" onClick={clearStop}>×</button>}
         </div>
         {lvl===3 && <span className="aliya-check">✓</span>}
       </div>
-      {showPicker && (
-        <div className="verse-picker-wrap">
-          <div className="verse-picker">
-            {VERSES.map(v => (
-              <button
-                key={v}
-                className={`vchip${a.stop===toHebNum(v)?' sel':''}`}
-                onClick={()=>pickVerse(v)}
-              >{toHebNum(v)}</button>
-            ))}
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {showPicker && (
+          <motion.div className="verse-picker-wrap" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} transition={{type:'spring',stiffness:380,damping:32}}>
+            <div className="verse-picker">
+              {VERSES.map(v=>(
+                <motion.button key={v} className={`vchip${a.stop===toHebNum(v)?' sel':''}`} whileTap={{scale:0.85}} transition={{type:'spring',stiffness:600,damping:20}} onClick={()=>pickVerse(v)}>{toHebNum(v)}</motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-/* BottomSheet */
-function BottomSheet({ name, sc, prog, onClose, onToggle, onBulk, onStop }) {
-  const aliyaData = prog[name] || {};
-  const { done, total } = parshaStats(prog, name);
+function BottomSheet({ name, theme, prog, onClose, onToggle, onBulk, onStop }) {
+  const aliyaData = prog[name]||{};
+  const {done,total} = parshaStats(prog,name);
   const pct = Math.round(done/total*100);
-
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, []);
-
+  useEffect(()=>{ const p=document.body.style.overflow; document.body.style.overflow='hidden'; return()=>{document.body.style.overflow=p;}; },[]);
   return (
-    <div className="bs-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className="bs-sheet">
-        <div className="bs-handle" />
+    <motion.div className="bs-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.18}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <motion.div className={`bs-sheet ${theme}`} initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}} transition={{type:'spring',stiffness:380,damping:36}}>
+        <div className="bs-handle"/>
         <div className="bs-head">
           <div style={{flex:1}}>
-            <div className="bs-title" style={{color:sc}}>{name}</div>
+            <div className="bs-title">{name}</div>
           </div>
-          <div className="bs-prog-ring">
-            <span className="bs-prog-n" style={{color:pct===100?'#b87c10':sc}}>{pct}%</span>
+          <div className="bs-prog">
+            <span className="bs-prog-n" style={{color:pct===100?'var(--gold)':'var(--sc)'}}>{pct}%</span>
             <span className="bs-prog-l">{done}/{total}</span>
           </div>
           <div className="bs-links">
-            {seferiaTextUrl(name) && (
-              <a className="btn-sefaria text" href={seferiaTextUrl(name)} target="_blank" rel="noopener noreferrer">📖 טקסט</a>
-            )}
-            {seferiaTargumUrl(name) && (
-              <a className="btn-sefaria targ" href={seferiaTargumUrl(name)} target="_blank" rel="noopener noreferrer">📜 תרגום</a>
-            )}
+            {sefText(name)&&<a className="btn-link text" href={sefText(name)} target="_blank" rel="noopener">📖 טקסט</a>}
+            {sefTarg(name)&&<a className="btn-link targ" href={sefTarg(name)} target="_blank" rel="noopener">📜 תרגום</a>}
           </div>
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
         <div className="bs-bulk">
-          <button className="bulk-btn b1" onClick={()=>onBulk(name,'r1',true)}>✓ כל 1</button>
-          <button className="bulk-btn b2" onClick={()=>onBulk(name,'r2',true)}>✓ כל 2</button>
-          <button className="bulk-btn bt" onClick={()=>onBulk(name,'tg',true)}>✓ כל תרגום</button>
-          <button className="bulk-btn bx" onClick={()=>onBulk(name,null,false)}>× נקה</button>
+          <motion.button className="bulk-btn b1" whileTap={{scale:0.93}} onClick={()=>onBulk(name,'r1',true)}>✓ כל 1</motion.button>
+          <motion.button className="bulk-btn b2" whileTap={{scale:0.93}} onClick={()=>onBulk(name,'r2',true)}>✓ כל 2</motion.button>
+          <motion.button className="bulk-btn bt" whileTap={{scale:0.93}} onClick={()=>onBulk(name,'tg',true)}>✓ כל תרגום</motion.button>
+          <motion.button className="bulk-btn bx" whileTap={{scale:0.93}} onClick={()=>onBulk(name,null,false)}>× נקה</motion.button>
         </div>
         <div className="bs-body">
-          {ALIYA_LABELS.map((label, idx) => {
-            const num = idx+1;
-            const a = aliyaData[num] || {};
-            return <AliyaRow key={num} name={name} num={num} label={label} a={a} sc={sc} onToggle={onToggle} onStop={onStop} />;
+          {ALIYA_LABELS.map((label,idx)=>{
+            const num=idx+1; const a=aliyaData[num]||{};
+            return <AliyaRow key={num} name={name} num={num} label={label} a={a} onToggle={onToggle} onStop={onStop}/>;
           })}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
-/* ParshaCard */
-function ParshaCard({ name, sc, prog, isCurrent, filterMissing, onOpen }) {
-  const { done, total } = parshaStats(prog, name);
+function ParshaCard({ name, theme, prog, isCurrent, filterMissing, onOpen }) {
+  const {done,total} = parshaStats(prog,name);
   const pct = Math.round(done/total*100);
   const isComplete = done===total;
-  const hasMissing = done>0 && !isComplete;
+  const hasProg = done>0;
   return (
-    <div
-      className={`p-card${isCurrent?' is-current':''}${isComplete?' is-complete':''}${hasMissing&&filterMissing?' missing':''}`}
-      style={{'--sc':sc}} onClick={onOpen}
+    <motion.div
+      className={`p-card ${theme}${isCurrent?' is-current':''}${isComplete?' is-complete':''}${hasProg?' has-prog':''}`}
+      onClick={onOpen}
+      whileHover={{y:-5, boxShadow:'0 4px 20px rgba(0,0,0,0.1), 0 12px 40px rgba(0,0,0,0.08)'}}
+      whileTap={{scale:0.97}}
+      transition={{type:'spring',stiffness:400,damping:28}}
     >
       {isCurrent && <div className="now-chip">השבוע</div>}
       <div className="p-name">{name}</div>
       <div className="p-dots">
         {[1,2,3,4,5,6,7].map(i=>{
-          const d = aliyaDone((prog[name]||{})[i]);
-          return <div key={i} className={`p-dot d${d}`} style={d>=2?{'--sc':sc}:{}} title={`עליה ${i}: ${d}/3`}/>;
+          const d=aliyaDone((prog[name]||{})[i]);
+          return <div key={i} className={`p-dot d${d}`}/>;
         })}
       </div>
       <div className="p-prog">
-        <div className="p-prog-fill" style={{width:`${pct}%`, background: isComplete?'#b87c10':sc}} />
+        <div className="p-prog-fill" style={{width:`${pct}%`,background:isComplete?'var(--gold-grad)':'var(--sg)'}}/>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-/* SeferSection */
 function SeferSection({ sefer, prog, currentParasha, filterMissing, onOpen, defaultOpen }) {
   const [open, setOpen] = useState(defaultOpen);
-  const { done, total } = seferStats(prog, sefer);
+  const {done,total} = seferStats(prog,sefer);
   const pct = Math.round(done/total*100);
   const visible = filterMissing ? sefer.parshiot.filter(n=>parshaStats(prog,n).done<21) : sefer.parshiot;
-  if (filterMissing && visible.length===0) return null;
+  if (filterMissing&&visible.length===0) return null;
   return (
-    <div className="sefer-section">
-      <div className="sefer-hdr" onClick={()=>setOpen(v=>!v)}>
-        <div className="sefer-pip" style={{background:sefer.color}} />
-        <span className="sefer-label" style={{color:sefer.color}}>{sefer.name}</span>
+    <div className={`sefer-section ${sefer.theme}`}>
+      <motion.div className="sefer-hdr" onClick={()=>setOpen(v=>!v)} whileTap={{scale:0.99}}>
+        <div className="sefer-pip-wrap">
+          <motion.div className="sefer-pip" whileHover={{scale:1.1}} transition={{type:'spring',stiffness:400,damping:20}}>
+            <span className="sefer-pip-letter">{sefer.letter}</span>
+          </motion.div>
+        </div>
+        <span className="sefer-label">{sefer.name}</span>
         <span className="sefer-pct">{done}/{total} · {pct}%</span>
         <span className={`sefer-chevron${open?' open':''}`}>▾</span>
-      </div>
-      {open && <>
-        <div className="sefer-prog">
-          <div className="sefer-prog-fill" style={{width:`${pct}%`, background:sefer.color}} />
-        </div>
-        <div className="parasha-grid">
-          {visible.map(name => (
-            <ParshaCard key={name} name={name} sc={sefer.color} prog={prog}
-              isCurrent={currentParasha===name} filterMissing={filterMissing}
-              onOpen={()=>onOpen(name, sefer.color)} />
-          ))}
-        </div>
-      </>}
+      </motion.div>
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{type:'spring',stiffness:350,damping:30}}>
+            <div className="sefer-bar">
+              <div className="sefer-bar-fill" style={{width:`${pct}%`}}/>
+            </div>
+            <div className="parasha-grid">
+              {visible.map(name=>(
+                <ParshaCard key={name} name={name} theme={sefer.theme} prog={prog}
+                  isCurrent={currentParasha===name} filterMissing={filterMissing}
+                  onOpen={()=>onOpen(name,sefer.theme)}/>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-/* StatsStrip */
 function StatsStrip({ prog }) {
   const s = globalStats(prog);
   const pct = Math.round((s.r1+s.r2+s.tg)/(54*21)*100);
   return (
     <div className="stats-strip">
-      <div className="stat"><span className="stat-n" style={{color:'#1e4fa0'}}>{s.r1}</span><span className="stat-l">קריאה א׳</span></div>
+      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#667eea,#764ba2)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.r1}</span><span className="stat-l">קריאה א׳</span></div>
       <div className="stat-div"/>
-      <div className="stat"><span className="stat-n" style={{color:'#4a67c8'}}>{s.r2}</span><span className="stat-l">קריאה ב׳</span></div>
+      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#5a4fcf,#764ba2)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.r2}</span><span className="stat-l">קריאה ב׳</span></div>
       <div className="stat-div"/>
-      <div className="stat"><span className="stat-n" style={{color:'#b87c10'}}>{s.tg}</span><span className="stat-l">תרגום</span></div>
+      <div className="stat"><span className="stat-n" style={{background:'var(--gold-grad)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.tg}</span><span className="stat-l">תרגום</span></div>
       <div className="stat-div"/>
-      <div className="stat"><span className="stat-n" style={{color:'#1a6845'}}>{s.complete}</span><span className="stat-l">שלמות</span></div>
+      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#43e97b,#38ef7d)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.complete}</span><span className="stat-l">שלמות</span></div>
       <div className="stat-div"/>
       <div className="stat-bar-wrap">
         <div className="stat-bar-track"><div className="stat-bar-fill" style={{width:`${pct}%`}}/></div>
@@ -637,92 +627,49 @@ function StatsStrip({ prog }) {
 
 /* ═══ APP ═════════════════════════════════════ */
 function App() {
-  const [user, setUser]       = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [prog, setProg]       = useState({});
-  const [sheet, setSheet]     = useState(null); // {name, color}
-  const [filterMissing, setFilterMissing] = useState(false);
-  const saveTimer = useRef(null);
-  const curYear   = useRef(getHebrewYear()).current;
-  const curParasha = useRef(detectParasha()).current;
-  const { missing } = globalStats(prog);
+  const [user,setUser]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [prog,setProg]=useState({});
+  const [sheet,setSheet]=useState(null);
+  const [filterMissing,setFilterMissing]=useState(false);
+  const saveTimer=useRef(null);
+  const curYear=useRef(getHebrewYear()).current;
+  const curParasha=useRef(detectParasha()).current;
+  const {missing}=globalStats(prog);
 
-  useEffect(() => {
-    const { auth, onAuthStateChanged, getRedirectResult } = window._fb;
+  useEffect(()=>{
+    const {auth,onAuthStateChanged,getRedirectResult}=window._fb;
     getRedirectResult(auth).catch(()=>{});
-    return onAuthStateChanged(auth, async u => {
+    return onAuthStateChanged(auth,async u=>{
       setUser(u);
-      if (u) {
-        const r = await fbLoad(u.uid);
-        if (r !== null) setProg(r);
-        else { try { const l=localStorage.getItem('mikra-prog'); if(l) setProg(JSON.parse(l)); } catch{} }
-        document.title = 'שמו״ת · '+(u.displayName?.split(' ')[0]||'');
-      } else { setProg({}); document.title='שניים מקרא ואחד תרגום'; }
+      if(u){const r=await fbLoad(u.uid);if(r!==null)setProg(r);else{try{const l=localStorage.getItem('mikra-prog');if(l)setProg(JSON.parse(l));}catch{}}
+        document.title='שמו״ת · '+(u.displayName?.split(' ')[0]||'');
+      }else{setProg({});document.title='שניים מקרא ואחד תרגום';}
       setLoading(false);
     });
-  }, []);
+  },[]);
 
-  function signIn() {
-    const {auth,provider,signInWithPopup,signInWithRedirect} = window._fb;
-    signInWithPopup(auth,provider).catch(e=>{
-      if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user') signInWithRedirect(auth,provider);
-    });
-  }
-  function signOut() { window._fb.signOut(window._fb.auth); setProg({}); setSheet(null); }
+  function signIn(){const{auth,provider,signInWithPopup,signInWithRedirect}=window._fb;signInWithPopup(auth,provider).catch(e=>{if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user')signInWithRedirect(auth,provider);});}
+  function signOut(){window._fb.signOut(window._fb.auth);setProg({});setSheet(null);}
 
-  function persist(next) {
-    try { localStorage.setItem('mikra-prog', JSON.stringify(next)); } catch{}
-    if (user) { clearTimeout(saveTimer.current); saveTimer.current = setTimeout(()=>fbSave(user.uid,next), 1200); }
-  }
+  function persist(next){try{localStorage.setItem('mikra-prog',JSON.stringify(next));}catch{}if(user){clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>fbSave(user.uid,next),1200);}}
+  function toggleAliya(parasha,num,field){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};n[parasha][num][field]=!n[parasha][num][field];persist(n);return n;});}
+  function bulkMark(parasha,field,value){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(field===null){n[parasha]={};}else{for(let i=1;i<=7;i++){if(!n[parasha][i])n[parasha][i]={};n[parasha][i][field]=value;}}persist(n);return n;});}
+  function updateStop(parasha,num,val){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};if(val)n[parasha][num].stop=val;else delete n[parasha][num].stop;persist(n);return n;});}
 
-  function toggleAliya(parasha, num, field) {
-    setProg(prev => {
-      const n = JSON.parse(JSON.stringify(prev));
-      if(!n[parasha]) n[parasha]={};
-      if(!n[parasha][num]) n[parasha][num]={};
-      n[parasha][num][field] = !n[parasha][num][field];
-      persist(n); return n;
-    });
-  }
+  if(loading)return <div className="loading"><motion.div animate={{opacity:[0.4,1,0.4]}} transition={{duration:1.5,repeat:Infinity}}>טוען…</motion.div></div>;
 
-  function bulkMark(parasha, field, value) {
-    setProg(prev => {
-      const n = JSON.parse(JSON.stringify(prev));
-      if(!n[parasha]) n[parasha]={};
-      if(field===null) { n[parasha]={}; }
-      else { for(let i=1;i<=7;i++) { if(!n[parasha][i]) n[parasha][i]={}; n[parasha][i][field]=value; } }
-      persist(n); return n;
-    });
-  }
-
-  function updateStop(parasha, num, val) {
-    setProg(prev => {
-      const n = JSON.parse(JSON.stringify(prev));
-      if(!n[parasha]) n[parasha]={};
-      if(!n[parasha][num]) n[parasha][num]={};
-      if(val) n[parasha][num].stop=val; else delete n[parasha][num].stop;
-      persist(n); return n;
-    });
-  }
-
-  if (loading) return <div className="loading">טוען…</div>;
-
-  if (!user) return (
+  if(!user) return (
     <div className="signin-bg">
-      <div className="signin-box">
-        <div className="signin-icon">שמו״ת</div>
+      <motion.div className="signin-box" initial={{opacity:0,y:40,scale:0.95}} animate={{opacity:1,y:0,scale:1}} transition={{type:'spring',stiffness:300,damping:28}}>
+        <motion.div className="signin-icon" animate={{backgroundPosition:['0% 50%','100% 50%','0% 50%']}} transition={{duration:4,repeat:Infinity}} style={{backgroundSize:'200%'}}>שמו״ת</motion.div>
         <div className="signin-title">שניים מקרא ואחד תרגום</div>
-        <div className="signin-desc">עקוב אחר כל עליה, כל קריאה — ותמיד תדע בדיוק היכן עצרת.</div>
-        <button className="btn-google" onClick={signIn}>
-          <svg width="18" height="18" viewBox="0 0 24 24">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
+        <div className="signin-desc">עקוב אחר כל עליה, כל קריאה —<br/>ותמיד תדע בדיוק היכן עצרת.</div>
+        <motion.button className="btn-google" onClick={signIn} whileHover={{y:-2}} whileTap={{scale:0.97}} transition={{type:'spring',stiffness:400,damping:20}}>
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
           כניסה עם Google
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </div>
   );
 
@@ -735,41 +682,39 @@ function App() {
         </div>
         <div className="bar-end">
           <span className="badge-year">{yearStr(curYear)}</span>
-          <button className={`btn-missing${filterMissing?' on':''}`} onClick={()=>setFilterMissing(v=>!v)}>
+          <motion.button className={`btn-missing${filterMissing?' on':''}`} onClick={()=>setFilterMissing(v=>!v)} whileTap={{scale:0.93}} transition={{type:'spring',stiffness:400,damping:20}}>
             ⚠ {missing}
-          </button>
-          {user.photoURL && <img className="user-avatar" src={user.photoURL} alt="" />}
+          </motion.button>
+          {user.photoURL && <img className="user-av" src={user.photoURL} alt=""/>}
           <button className="btn-icon" onClick={signOut} title="יציאה">↩</button>
         </div>
       </header>
-
-      <StatsStrip prog={prog} />
-
+      <StatsStrip prog={prog}/>
       <main className="main">
-        {filterMissing && (
-          <div className="filter-notice">
-            <span>מציג פרשות עם חוסרים · {missing} פרשות</span>
-            <button className="btn-icon" style={{color:'#882010'}} onClick={()=>setFilterMissing(false)}>✕</button>
-          </div>
-        )}
-        {SFARIM.map((sefer, i) => (
-          <SeferSection key={sefer.id} sefer={sefer} prog={prog}
-            currentParasha={curParasha} filterMissing={filterMissing}
-            onOpen={(name,color)=>setSheet({name,color})}
-            defaultOpen={filterMissing ? sefer.parshiot.some(p=>parshaStats(prog,p).done<21) : sefer.parshiot.includes(curParasha)||i===0}
-          />
+        <AnimatePresence>
+          {filterMissing && (
+            <motion.div className="filter-notice" initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}}>
+              <span>מציג פרשות עם חוסרים · {missing} פרשות</span>
+              <button className="btn-icon" style={{color:'#c0392b',width:24,height:24,fontSize:'0.8rem'}} onClick={()=>setFilterMissing(false)}>✕</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {SFARIM.map((sefer,i)=>(
+          <SeferSection key={sefer.id} sefer={sefer} prog={prog} currentParasha={curParasha}
+            filterMissing={filterMissing} onOpen={(name,theme)=>setSheet({name,theme})}
+            defaultOpen={filterMissing?sefer.parshiot.some(p=>parshaStats(prog,p).done<21):sefer.parshiot.includes(curParasha)||i===0}/>
         ))}
       </main>
-
-      {sheet && (
-        <BottomSheet name={sheet.name} sc={sheet.color} prog={prog}
-          onClose={()=>setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop} />
-      )}
+      <AnimatePresence>
+        {sheet && (
+          <BottomSheet key="sheet" name={sheet.name} theme={sheet.theme} prog={prog}
+            onClose={()=>setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop}/>
+        )}
+      </AnimatePresence>
     </>
   );
 }
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
