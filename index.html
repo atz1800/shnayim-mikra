@@ -378,6 +378,18 @@ const SEFARIA = {
   'כי תבוא':'Parashat_Ki_Tavo','נצבים':'Parashat_Nitzavim','וילך':'Parashat_Vayeilech',
   'האזינו':'Parashat_Haazinu','וזאת הברכה':'Parashat_Vezot_Haberakhah',
 };
+function toHebNum(n) {
+  if (n === 15) return 'טו';
+  if (n === 16) return 'טז';
+  const ones = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+  const tens = ['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+  let r = '', x = n;
+  if (x >= 100) { r += ['','ק','ר','ש','ת'][Math.floor(x/100)]; x %= 100; }
+  if (x >= 10)  { r += tens[Math.floor(x/10)]; x %= 10; }
+  if (x > 0)    { r += ones[x]; }
+  return r;
+}
+
 function seferiaTextUrl(name) {
   const s = SEFARIA[name]; if (!s) return null;
   return `https://www.sefaria.org.il/${s}?lang=he&aliyot=1`;
@@ -444,7 +456,7 @@ function AliyaRow({ name, num, label, a, sc, onToggle, onStop }) {
   const VERSES = Array.from({length:50},(_,i)=>i+1);
 
   function pickVerse(v) {
-    onStop(name, num, String(v));
+    onStop(name, num, toHebNum(v));
     setShowPicker(false);
   }
   function clearStop(e) {
@@ -481,9 +493,9 @@ function AliyaRow({ name, num, label, a, sc, onToggle, onStop }) {
             {VERSES.map(v => (
               <button
                 key={v}
-                className={`vchip${a.stop===String(v)?' sel':''}`}
+                className={`vchip${a.stop===toHebNum(v)?' sel':''}`}
                 onClick={()=>pickVerse(v)}
-              >{v}</button>
+              >{toHebNum(v)}</button>
             ))}
           </div>
         </div>
