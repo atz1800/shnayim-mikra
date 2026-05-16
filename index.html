@@ -380,7 +380,14 @@ a{color:inherit;text-decoration:none;}
 </head>
 <body>
 <div id="root"></div>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(()=>{});
+  navigator.serviceWorker.addEventListener('message',e=>{
+    if(e.data?.type==='SW_UPDATED') window.location.reload();
+  });
+}
+</script>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 const FM = window.FramerMotion || {};
