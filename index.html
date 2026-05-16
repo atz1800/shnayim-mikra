@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="שמו״ת">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#f2f3f8">
 <title>שניים מקרא ואחד תרגום</title>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,388 +35,339 @@
 </script>
 
 <style>
-/* ── Reset ────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
-body {
-  font-family: 'Heebo', -apple-system, 'Segoe UI', sans-serif;
-  background: #ffffff;
-  color: #2D3748;
-  min-height: 100dvh;
-  line-height: 1.5;
-  word-spacing: 0.02em;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:'Heebo',-apple-system,'Segoe UI',sans-serif;
+  background:#f2f3f8;
+  color:#1a202c;
+  min-height:100dvh;
+  line-height:1.5;
 }
-input, button { font-family: inherit; }
-a { color: inherit; text-decoration: none; }
+input,button{font-family:inherit;}
+a{color:inherit;text-decoration:none;}
 
-/* ── Design tokens ────────────────────────────── */
-:root {
-  --text1: #2D3748;
-  --text2: #718096;
-  --text3: #a0aec0;
-  --bg: #ffffff;
-  --surface: rgba(255,255,255,0.98);
-  --surface-solid: #ffffff;
-  --border: rgba(0,0,0,0.07);
-  --gold: #b87c10;
-  --gold-grad: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.05), 0 2px 10px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 10px 28px rgba(0,0,0,0.09);
-  --shadow-lg: 0 6px 20px rgba(0,0,0,0.1), 0 18px 48px rgba(0,0,0,0.11);
-  --shadow-xl: 0 10px 40px rgba(0,0,0,0.12), 0 28px 72px rgba(0,0,0,0.13);
-  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px; --radius-xl: 28px;
+:root{
+  --text1:#1a202c;
+  --text2:#4a5568;
+  --text3:#a0aec0;
+  --bg:#f2f3f8;
+  --white:#ffffff;
+  --gold:#c47b0a;
+  --gold-grad:linear-gradient(135deg,#f6d365,#fda085);
+  --shadow-card:0 4px 20px rgba(100,110,200,0.08),0 1px 4px rgba(0,0,0,0.04);
+  --shadow-hover:0 10px 40px rgba(100,110,200,0.15),0 2px 8px rgba(0,0,0,0.06);
+  --spring:cubic-bezier(0.34,1.56,0.64,1);
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+  --r-sm:10px;--r-md:16px;--r-lg:22px;--r-xl:28px;
 }
 
-/* ── Sefer gradient themes ────────────────────── */
-.theme-bereshit { --sg: linear-gradient(135deg,#667eea,#764ba2); --sc: #5a4fcf; --sl: rgba(102,126,234,0.09); --sglow: rgba(102,126,234,0.5); }
-.theme-shemot   { --sg: linear-gradient(135deg,#f6c843,#fda085); --sc: #c97a14; --sl: rgba(246,200,67,0.09); --sglow: rgba(246,200,67,0.55); }
-.theme-vayikra  { --sg: linear-gradient(135deg,#f093fb,#f5576c); --sc: #d63e6a; --sl: rgba(245,87,108,0.09); --sglow: rgba(240,147,251,0.5); }
-.theme-bamidbar { --sg: linear-gradient(135deg,#4facfe,#00d4fe); --sc: #0ea5e9; --sl: rgba(79,172,254,0.09); --sglow: rgba(79,172,254,0.5); }
-.theme-devarim  { --sg: linear-gradient(135deg,#f97316,#f59e0b); --sc: #d96b0a; --sl: rgba(249,115,22,0.09); --sglow: rgba(249,115,22,0.5); }
+/* ── Per-sefer themes ─────────────────────── */
+.theme-bereshit{--sc:#1a56db;--sc2:#0ea5e9;--sg:linear-gradient(135deg,#1a56db,#0ea5e9);--sl:rgba(26,86,219,0.08);--sglow:rgba(26,86,219,0.22);}
+.theme-shemot  {--sc:#d97706;--sc2:#f97316;--sg:linear-gradient(135deg,#d97706,#f97316);--sl:rgba(217,119,6,0.08);--sglow:rgba(217,119,6,0.22);}
+.theme-vayikra {--sc:#059669;--sc2:#34d399;--sg:linear-gradient(135deg,#059669,#34d399);--sl:rgba(5,150,105,0.08);--sglow:rgba(5,150,105,0.22);}
+.theme-bamidbar{--sc:#7c3aed;--sc2:#a78bfa;--sg:linear-gradient(135deg,#7c3aed,#a78bfa);--sl:rgba(124,58,237,0.08);--sglow:rgba(124,58,237,0.22);}
+.theme-devarim {--sc:#dc2626;--sc2:#f97316;--sg:linear-gradient(135deg,#dc2626,#f97316);--sl:rgba(220,38,38,0.08);--sglow:rgba(220,38,38,0.22);}
 
-/* ── App bar ──────────────────────────────────── */
-.app-bar {
-  position: sticky; inset-block-start: 0; z-index: 90;
-  padding: 0.6rem 1.1rem;
-  display: flex; align-items: center; gap: 0.75rem;
-  background: rgba(255,255,255,0.94);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border-block-end: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+/* ── App bar ──────────────────────────────── */
+.app-bar{
+  position:sticky;inset-block-start:0;z-index:90;
+  padding:.65rem 1rem;
+  display:flex;align-items:center;gap:.6rem;
+  background:rgba(242,243,248,0.94);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-block-end:1px solid rgba(255,255,255,0.7);
+  box-shadow:0 1px 0 rgba(0,0,0,0.05);
 }
-.bar-brand { flex: 1; min-width: 0; }
-.bar-logo {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: 1.2rem; font-weight: 900;
-  background: linear-gradient(135deg,#5a4fcf 0%,#f6d365 50%,#fda085 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+.bar-brand{flex:1;min-width:0;}
+.bar-logo{
+  font-family:'Frank Ruhl Libre',serif;font-size:1.2rem;font-weight:900;
+  background:linear-gradient(135deg,#1a56db,#7c3aed,#dc2626);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.bar-tagline { font-size: 0.65rem; color: var(--text3); letter-spacing: 0.01em; }
-.bar-end { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
-.badge-year {
-  background: linear-gradient(135deg,#5a4fcf,#764ba2);
-  color: #f6d365; font-family: 'Frank Ruhl Libre', serif;
-  font-size: 0.62rem; font-weight: 700; padding: 0.2rem 0.6rem;
-  border-radius: 999px; white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(90,79,207,0.35);
+.bar-tagline{font-size:.62rem;color:var(--text3);}
+.bar-end{display:flex;align-items:center;gap:.4rem;flex-shrink:0;}
+.badge-year{
+  background:linear-gradient(135deg,#1a56db,#7c3aed);
+  color:#fff;font-size:.6rem;font-weight:700;
+  padding:.18rem .55rem;border-radius:999px;white-space:nowrap;
+  box-shadow:0 2px 8px rgba(26,86,219,0.3);
 }
-.btn-missing {
-  display: flex; align-items: center; gap: 0.2rem;
-  background: rgba(255,255,255,0.9); border: 1px solid rgba(220,80,60,0.2);
-  border-radius: 999px; padding: 0.22rem 0.65rem;
-  font-size: 0.62rem; font-weight: 600; color: #c0392b; cursor: pointer;
-  transition: all .2s; backdrop-filter: blur(8px); white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(192,57,43,0.1);
+.btn-missing{
+  display:flex;align-items:center;gap:.15rem;
+  background:rgba(255,255,255,0.85);border:1.5px solid rgba(220,38,38,0.2);
+  border-radius:999px;padding:.2rem .55rem;
+  font-size:.6rem;font-weight:700;color:#dc2626;cursor:pointer;
+  transition:all .2s;white-space:nowrap;
 }
-.btn-missing.on { background: linear-gradient(135deg,#f5576c,#e53e6a); color: #fff; border-color: transparent; box-shadow: 0 4px 14px rgba(229,62,106,0.4); }
-.user-av { width: 28px; height: 28px; border-radius: 50%; box-shadow: var(--shadow-sm); border: 2px solid rgba(255,255,255,0.9); }
-.btn-icon { background: rgba(0,0,0,0.04); border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; color: var(--text2); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: all .15s; }
-.btn-icon:hover { background: rgba(0,0,0,0.08); color: var(--text1); }
+.btn-missing.on{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(220,38,38,0.4);}
+.user-av{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+.btn-icon{background:rgba(255,255,255,0.8);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;color:var(--text2);font-size:.82rem;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.btn-icon:hover{background:#fff;color:var(--text1);}
 
-/* ── Stats strip ──────────────────────────────── */
-.stats-strip {
-  padding: 0.6rem 1.1rem;
-  display: flex; align-items: center; gap: 0; overflow-x: auto;
-  scrollbar-width: none;
-  background: #ffffff;
-  border-block-end: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+/* ── Stats strip ──────────────────────────── */
+.stats-strip{
+  display:flex;align-items:center;gap:0;overflow-x:auto;scrollbar-width:none;
+  padding:.55rem 1rem;
+  background:#fff;
+  border-block-end:1px solid rgba(0,0,0,0.05);
+  box-shadow:0 2px 12px rgba(0,0,0,0.04);
 }
-.stats-strip::-webkit-scrollbar { display: none; }
-.stat { display: flex; flex-direction: column; align-items: center; padding: 0.1rem 0.9rem; }
-.stat-n { font-family: 'Frank Ruhl Libre', serif; font-size: 1.2rem; font-weight: 900; line-height: 1.1; }
-.stat-l { font-size: 0.58rem; color: var(--text3); margin-top: 1px; white-space: nowrap; }
-.stat-div { width: 1px; height: 28px; background: rgba(0,0,0,0.06); }
-.stat-bar-wrap { flex: 1; min-width: 100px; padding: 0 0.9rem; display: flex; flex-direction: column; gap: 4px; }
-.stat-bar-track { height: 6px; background: rgba(0,0,0,0.06); border-radius: 3px; overflow: hidden; }
-.stat-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg,#667eea,#f6d365,#fda085); transition: width .8s var(--ease-out); box-shadow: 0 0 8px rgba(102,126,234,0.4); }
-.stat-bar-label { font-size: 0.58rem; color: var(--text3); }
+.stats-strip::-webkit-scrollbar{display:none;}
+.stat{display:flex;flex-direction:column;align-items:center;padding:.05rem .8rem;flex-shrink:0;}
+.stat-n{font-family:'Frank Ruhl Libre',serif;font-size:1.15rem;font-weight:900;line-height:1.1;}
+.stat-l{font-size:.56rem;color:var(--text3);margin-top:1px;white-space:nowrap;}
+.stat-div{width:1px;height:24px;background:rgba(0,0,0,0.07);flex-shrink:0;}
+.stat-bar-wrap{flex:1;min-width:90px;padding:0 .8rem;display:flex;flex-direction:column;gap:4px;}
+.stat-bar-track{height:7px;background:rgba(0,0,0,0.06);border-radius:4px;overflow:hidden;}
+.stat-bar-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,#1a56db,#7c3aed,#dc2626);
+  transition:width .8s var(--ease-out);
+  box-shadow:0 0 8px rgba(124,58,237,0.3);
+}
+.stat-bar-label{font-size:.56rem;color:var(--text3);}
 
-/* ── Sign-in ──────────────────────────────────── */
-.signin-bg {
-  min-height: 100dvh; display: flex; align-items: center; justify-content: center;
-  padding: 1.5rem; background: linear-gradient(160deg, #f0f4ff 0%, #f9f0ff 50%, #fff5f0 100%);
-}
-.signin-box {
-  background: rgba(255,255,255,0.92); backdrop-filter: blur(40px);
-  border-radius: var(--radius-xl); padding: 2.8rem 2rem;
-  text-align: center; box-shadow: var(--shadow-xl); width: 100%; max-width: 320px;
-  border: 1px solid rgba(255,255,255,0.95);
-}
-.signin-icon {
-  font-family: 'Frank Ruhl Libre', serif; font-size: 3.8rem; font-weight: 900; line-height: 1;
-  background: linear-gradient(135deg,#667eea,#764ba2,#fda085);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  margin-block-end: 0.2rem;
-}
-.signin-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.1rem; font-weight: 700; color: var(--text1); margin-block-end: 0.5rem; }
-.signin-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.7; margin-block-end: 2rem; }
-.btn-google {
-  display: flex; align-items: center; justify-content: center; gap: 0.65rem; width: 100%;
-  background: var(--surface-solid); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius-md);
-  padding: 0.85rem 1rem; font-size: 0.9rem; font-weight: 600; color: var(--text1);
-  cursor: pointer; box-shadow: var(--shadow-md); transition: all .2s var(--spring);
-}
-.btn-google:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-.btn-google:active { transform: scale(0.97); }
+/* ── Sign-in ──────────────────────────────── */
+.signin-bg{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:linear-gradient(160deg,#eef2ff,#f5f0ff,#fff1f0);}
+.signin-box{background:#fff;border-radius:var(--r-xl);padding:2.8rem 2rem;text-align:center;box-shadow:0 20px 60px rgba(100,100,200,0.15);width:100%;max-width:320px;}
+.signin-icon{font-family:'Frank Ruhl Libre',serif;font-size:3.8rem;font-weight:900;line-height:1;background:linear-gradient(135deg,#1a56db,#7c3aed,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-block-end:.2rem;}
+.signin-title{font-family:'Frank Ruhl Libre',serif;font-size:1.1rem;font-weight:700;color:var(--text1);margin-block-end:.5rem;}
+.signin-desc{font-size:.82rem;color:var(--text2);line-height:1.7;margin-block-end:2rem;}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:.65rem;width:100%;background:#fff;border:1.5px solid rgba(0,0,0,0.1);border-radius:var(--r-md);padding:.85rem 1rem;font-size:.9rem;font-weight:600;color:var(--text1);cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.08);transition:all .2s var(--spring);}
+.btn-google:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
 
-/* ── Main layout ──────────────────────────────── */
-.main { max-width: 900px; margin: 0 auto; padding: 1.2rem 1rem 5rem; }
-.filter-notice {
-  display: flex; align-items: center; justify-content: space-between;
-  background: rgba(229,62,106,0.07); backdrop-filter: blur(8px);
-  border: 1px solid rgba(229,62,106,0.18); border-radius: var(--radius-md);
-  padding: 0.55rem 1rem; margin-block-end: 1rem;
-  font-size: 0.75rem; font-weight: 600; color: #c0392b;
-}
+/* ── Main ─────────────────────────────────── */
+.main{max-width:700px;margin:0 auto;padding:1rem 1rem 5rem;}
+.filter-notice{display:flex;align-items:center;justify-content:space-between;background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.15);border-radius:var(--r-md);padding:.5rem .9rem;margin-block-end:.8rem;font-size:.73rem;font-weight:600;color:#dc2626;}
 
-/* ── Sefer section ────────────────────────────── */
-.sefer-section { margin-block-end: 1.2rem; }
-.sefer-hdr {
-  display: flex; align-items: center; gap: 0.65rem;
-  padding: 0.5rem 0.4rem; cursor: pointer; user-select: none;
-  border-radius: var(--radius-md); transition: background .15s;
-}
-.sefer-hdr:hover { background: rgba(0,0,0,0.03); }
-.sefer-label { font-family: 'Frank Ruhl Libre', serif; font-size: 1.08rem; font-weight: 700; color: var(--sc); }
-.sefer-pct { font-size: 0.62rem; color: var(--text3); margin-inline-end: auto; }
-.sefer-chevron { color: var(--text3); font-size: 0.65rem; transition: transform .25s var(--spring); display: inline-block; }
-.sefer-chevron.open { transform: rotate(180deg); }
-.sefer-bar { height: 4px; background: rgba(0,0,0,0.06); border-radius: 2px; margin-block-end: 0.8rem; overflow: hidden; }
-.sefer-bar-fill { height: 100%; border-radius: 2px; background: var(--sg); transition: width .5s var(--ease-out); }
+/* ── Sefer cards grid ─────────────────────── */
+.sefer-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-block-end:1rem;}
 
-/* ── Parasha grid ─────────────────────────────── */
-.parasha-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px,1fr)); gap: 0.65rem; }
-@media (max-width: 420px) { .parasha-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; } }
+.sc-card{
+  background:#fff;border-radius:var(--r-lg);
+  padding:1.1rem .75rem 1rem;
+  display:flex;flex-direction:column;align-items:center;gap:.55rem;
+  cursor:pointer;position:relative;overflow:hidden;
+  box-shadow:var(--shadow-card);
+  border:2.5px solid transparent;
+  transition:box-shadow .25s, border-color .25s;
+  min-height:180px;
+}
+.sc-card::after{
+  content:'';position:absolute;inset-block-start:0;inset-inline-start:0;inset-inline-end:0;
+  height:4px;background:var(--sg);opacity:0;transition:opacity .25s;
+}
+.sc-card.selected{border-color:var(--sc);box-shadow:0 10px 36px var(--sglow),0 2px 8px rgba(0,0,0,0.06);}
+.sc-card.selected::after{opacity:1;}
+.sc-card:last-child:nth-child(odd){grid-column:1/-1;flex-direction:row;justify-content:center;gap:2rem;min-height:120px;padding:1rem 2rem;}
 
-/* ── Parasha card ─────────────────────────────── */
-.p-card {
-  background: linear-gradient(155deg, #ffffff 50%, var(--sl));
-  border: 1px solid rgba(255,255,255,0.9);
-  border-radius: var(--radius-lg); padding: 0.9rem 0.8rem 0.75rem;
-  cursor: pointer; position: relative; overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-  transition: box-shadow .2s;
-}
-.p-card::before {
-  content: ''; position: absolute;
-  inset-inline-start: 0; inset-block-start: 0; inset-block-end: 0;
-  width: 3px; background: var(--sg); opacity: 0; transition: opacity .2s;
-}
-.p-card.has-prog::before { opacity: 1; }
-.p-card.is-complete {
-  background: linear-gradient(155deg,#fffbeb 40%, rgba(246,211,101,0.15));
-  border-color: rgba(246,211,101,0.35);
-  box-shadow: 0 2px 10px rgba(246,211,101,0.2), 0 4px 20px rgba(253,160,133,0.12);
-}
-.now-chip {
-  position: absolute; inset-block-start: 0.4rem; inset-inline-end: 0.4rem;
-  font-size: 0.48rem; font-weight: 800; padding: 0.12rem 0.4rem; border-radius: 999px;
-  background: var(--sg); color: #fff; letter-spacing: 0.02em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-.p-name {
-  font-family: 'Frank Ruhl Libre', serif; font-size: 0.95rem; font-weight: 700;
-  color: var(--text1); margin-block-end: 0.55rem; padding-inline-end: 1.8rem; line-height: 1.3;
-}
-.p-dots { display: flex; gap: 3px; margin-block-end: 0.45rem; flex-wrap: wrap; }
-.p-dot {
-  width: 13px; height: 13px; border-radius: 50%; transition: all .2s; flex-shrink: 0;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
-}
-.p-dot.d0 { background: rgba(0,0,0,0.07); }
-.p-dot.d1 { background: rgba(90,79,207,0.2); border: 1.5px solid rgba(90,79,207,0.4); }
-.p-dot.d2 { background: var(--sc); box-shadow: 0 1px 4px rgba(0,0,0,0.18); }
-.p-dot.d3 { background: var(--gold-grad); box-shadow: 0 1px 6px rgba(246,211,101,0.5); }
-.p-prog { height: 3px; background: rgba(0,0,0,0.06); border-radius: 2px; overflow: visible; }
-.p-prog-fill { height: 100%; border-radius: 2px; transition: width .4s var(--ease-out); }
+.sc-name{font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;font-weight:900;color:var(--text1);text-align:center;line-height:1.2;}
+.sc-card:last-child:nth-child(odd) .sc-name{font-size:1.25rem;}
 
-/* ── Bottom sheet ─────────────────────────────── */
-.bs-overlay {
-  position: fixed; inset: 0;
-  background: rgba(30,20,50,0.3);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  z-index: 200;
-  display: flex; align-items: flex-end; justify-content: center;
+.sc-sub{font-size:.62rem;color:var(--text3);text-align:center;}
+.sc-pct-label{
+  font-family:'Frank Ruhl Libre',serif;font-size:.8rem;font-weight:700;
+  color:var(--sc);background:var(--sl);
+  padding:.18rem .6rem;border-radius:999px;
 }
-.bs-sheet {
-  background: #ffffff;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  width: 100%; max-width: 620px; max-height: 90dvh; overflow-y: auto;
-  border: none;
-  box-shadow: 0 -20px 80px rgba(0,0,0,0.18), 0 -4px 24px rgba(0,0,0,0.1);
-  overscroll-behavior: contain;
-}
-.bs-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.1); margin: 0.8rem auto 0; }
-.bs-head {
-  display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.9rem 1.1rem 0.7rem;
-  border-block-end: 1px solid rgba(0,0,0,0.06);
-  position: sticky; inset-block-start: 0; background: rgba(255,255,255,0.98); z-index: 1;
-  backdrop-filter: blur(20px);
-}
-.bs-title { font-family: 'Frank Ruhl Libre', serif; font-size: 1.45rem; font-weight: 900; flex: 1; color: var(--text1); }
-.bs-prog { display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0; }
-.bs-prog-n { font-family: 'Frank Ruhl Libre', serif; font-size: 0.85rem; font-weight: 900; line-height: 1; }
-.bs-prog-l { font-size: 0.52rem; color: var(--text3); }
-.bs-links { display: flex; gap: 0.35rem; flex-shrink: 0; }
-.btn-link {
-  display: flex; align-items: center; gap: 0.2rem; border: none;
-  border-radius: 999px; padding: 0.28rem 0.65rem;
-  font-size: 0.62rem; font-weight: 700; cursor: pointer;
-  text-decoration: none; transition: all .15s; white-space: nowrap;
-  box-shadow: var(--shadow-sm);
-}
-.btn-link.text { background: linear-gradient(135deg,#43e97b,#38f9d7); color: #0a4a30; }
-.btn-link.targ { background: var(--gold-grad); color: #5a2e00; }
-.btn-link:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
-.btn-close {
-  background: rgba(0,0,0,0.05); border: none; border-radius: 50%;
-  width: 30px; height: 30px; cursor: pointer; font-size: 0.9rem; color: var(--text2);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  transition: all .15s;
-}
-.btn-close:hover { background: rgba(0,0,0,0.1); color: var(--text1); }
+.sc-card:last-child:nth-child(odd) .sc-info{display:flex;flex-direction:column;justify-content:center;gap:.4rem;}
 
-/* ── Bulk actions ─────────────────────────────── */
-.bs-bulk { display: flex; gap: 0.35rem; padding: 0.65rem 1.1rem; flex-wrap: wrap; border-block-end: 1px solid rgba(0,0,0,0.05); }
-.bulk-btn {
-  flex: 1; min-width: 0; height: 30px; border-radius: 999px; border: none;
-  font-size: 0.62rem; font-weight: 700; cursor: pointer; transition: all .15s var(--spring);
-  display: flex; align-items: center; justify-content: center; gap: 0.15rem;
-  white-space: nowrap; padding: 0 0.65rem; box-shadow: var(--shadow-sm);
+/* ── Parasha section (below grid) ─────────── */
+.parsha-section{
+  background:#fff;border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);
+  overflow:hidden;margin-block-end:.8rem;
 }
-.bulk-btn.b1 { background: linear-gradient(135deg,#e0e9ff,#c8daff); color: #1a3888; }
-.bulk-btn.b2 { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; box-shadow: 0 2px 8px rgba(102,126,234,0.35); }
-.bulk-btn.bt { background: var(--gold-grad); color: #3a1800; box-shadow: 0 2px 8px rgba(253,160,133,0.35); }
-.bulk-btn.bx { background: linear-gradient(135deg,#ffecd2,#fcb69f); color: #7a2010; }
-.bulk-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
-.bulk-btn:active { transform: scale(0.96); }
-.bs-body { padding: 0.4rem 1.1rem 1.8rem; }
+.ps-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.75rem 1rem;
+  background:var(--sg);
+}
+.ps-header-name{font-family:'Frank Ruhl Libre',serif;font-size:1.1rem;font-weight:900;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.15);}
+.ps-header-sub{font-size:.65rem;color:rgba(255,255,255,0.85);font-weight:500;}
+.ps-body{padding:.75rem;}
 
-/* ── Aliya row ────────────────────────────────── */
-.aliya-row {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.55rem 0; border-block-end: 1px solid rgba(0,0,0,0.04);
-  min-height: 50px;
+/* ── Parasha card ─────────────────────────── */
+.p-card{
+  background:#fff;
+  border-radius:var(--r-md);
+  padding:.85rem .75rem .7rem;
+  cursor:pointer;position:relative;overflow:hidden;
+  box-shadow:0 2px 10px rgba(0,0,0,0.06);
+  border:1.5px solid rgba(0,0,0,0.04);
+  transition:box-shadow .2s;
 }
-.aliya-row:last-child { border-block-end: none; }
-.aliya-idx {
-  width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.05);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.62rem; font-weight: 700; color: var(--text3); flex-shrink: 0;
+.p-card::before{
+  content:'';position:absolute;
+  inset-inline-start:0;inset-block-start:0;inset-block-end:0;
+  width:4px;background:var(--sg);opacity:0;transition:opacity .2s;
+  border-radius:0 0 0 var(--r-md);
 }
-.aliya-name { font-size: 0.78rem; color: var(--text2); min-width: 44px; }
-.aliya-actions { display: flex; gap: 0.3rem; margin-inline-end: auto; }
+.p-card.has-prog::before{opacity:1;}
+.p-card.is-complete{
+  background:linear-gradient(155deg,#fffbeb,rgba(246,211,101,0.1));
+  border-color:rgba(246,211,101,0.4);
+}
+.now-chip{
+  position:absolute;inset-block-start:.35rem;inset-inline-end:.35rem;
+  font-size:.46rem;font-weight:800;padding:.1rem .38rem;border-radius:999px;
+  background:var(--sg);color:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,0.2);
+}
+.p-name{font-family:'Frank Ruhl Libre',serif;font-size:.92rem;font-weight:700;color:var(--text1);margin-block-end:.5rem;padding-inline-end:1.6rem;line-height:1.3;}
+.p-dots{display:flex;gap:3px;margin-block-end:.42rem;flex-wrap:wrap;}
+.p-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;transition:all .2s;}
+.p-dot.d0{background:rgba(0,0,0,0.08);}
+.p-dot.d1{background:var(--sl);border:1.5px solid var(--sc);opacity:.7;}
+.p-dot.d2{background:var(--sc);box-shadow:0 1px 4px var(--sglow);}
+.p-dot.d3{background:linear-gradient(135deg,#f6d365,#fda085);box-shadow:0 1px 6px rgba(246,211,101,0.55);}
+.p-prog{height:4px;background:rgba(0,0,0,0.06);border-radius:2px;overflow:hidden;}
+.p-prog-fill{height:100%;border-radius:2px;transition:width .4s var(--ease-out);}
 
-/* ── Action buttons — vibrant ─────────────────── */
-.act-btn {
-  height: 33px; min-width: 38px; border-radius: 999px;
-  font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 0 0.55rem;
-  display: flex; align-items: center; justify-content: center;
-  user-select: none; -webkit-tap-highlight-color: transparent;
-  transition: box-shadow .15s, transform .1s;
+/* ── Bottom sheet ─────────────────────────── */
+.bs-overlay{
+  position:fixed;inset:0;
+  background:rgba(15,10,30,0.35);
+  backdrop-filter:blur(16px) saturate(160%);
+  -webkit-backdrop-filter:blur(16px) saturate(160%);
+  z-index:200;display:flex;align-items:flex-end;justify-content:center;
 }
-/* Reading 1 */
-.act-btn.r1.off {
-  background: rgba(102,126,234,0.09);
-  color: rgba(90,79,207,0.5);
-  border: 1.5px solid rgba(102,126,234,0.22);
+.bs-sheet{
+  background:#fff;
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  width:100%;max-width:640px;max-height:91dvh;overflow-y:auto;
+  box-shadow:0 -24px 80px rgba(0,0,0,0.18),0 -4px 20px rgba(0,0,0,0.08);
+  overscroll-behavior:contain;
 }
-.act-btn.r1.off:hover { background: rgba(102,126,234,0.17); color: #5a4fcf; }
-.act-btn.r1.on {
-  background: linear-gradient(135deg,#4f7fe8,#6b5ce7);
-  color: #fff; border: none;
-  box-shadow: 0 3px 14px rgba(102,126,234,0.55), 0 1px 4px rgba(102,126,234,0.35);
+.bs-handle{width:38px;height:4px;border-radius:2px;background:rgba(0,0,0,0.09);margin:.8rem auto 0;}
+.bs-head{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.9rem 1.1rem .7rem;
+  border-block-end:1px solid rgba(0,0,0,0.06);
+  position:sticky;inset-block-start:0;background:rgba(255,255,255,0.98);z-index:1;
+  backdrop-filter:blur(16px);
 }
-/* Reading 2 */
-.act-btn.r2.off {
-  background: rgba(90,79,207,0.07);
-  color: rgba(90,79,207,0.45);
-  border: 1.5px solid rgba(90,79,207,0.2);
+.bs-title{font-family:'Frank Ruhl Libre',serif;font-size:1.4rem;font-weight:900;flex:1;color:var(--text1);}
+.bs-prog{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;}
+.bs-prog-n{font-family:'Frank Ruhl Libre',serif;font-size:.88rem;font-weight:900;line-height:1;}
+.bs-prog-l{font-size:.5rem;color:var(--text3);}
+.bs-links{display:flex;gap:.3rem;flex-shrink:0;}
+.btn-link{
+  display:flex;align-items:center;gap:.18rem;border:none;
+  border-radius:999px;padding:.25rem .6rem;
+  font-size:.6rem;font-weight:700;cursor:pointer;text-decoration:none;
+  transition:all .15s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
-.act-btn.r2.off:hover { background: rgba(90,79,207,0.15); color: #5a4fcf; }
-.act-btn.r2.on {
-  background: linear-gradient(135deg,#5a4fcf,#7c3aed);
-  color: #fff; border: none;
-  box-shadow: 0 3px 14px rgba(90,79,207,0.55), 0 1px 4px rgba(90,79,207,0.35);
-}
-/* Targum */
-.act-btn.tg.off {
-  background: rgba(246,211,101,0.1);
-  color: rgba(180,100,20,0.55);
-  border: 1.5px solid rgba(246,180,50,0.28);
-}
-.act-btn.tg.off:hover { background: rgba(246,211,101,0.2); color: #b46414; }
-.act-btn.tg.on {
-  background: linear-gradient(135deg,#f6d365,#fda085);
-  color: #3a1800; border: none;
-  box-shadow: 0 3px 14px rgba(253,160,133,0.6), 0 1px 4px rgba(246,211,101,0.4);
-}
+.btn-link.text{background:linear-gradient(135deg,#059669,#34d399);color:#fff;}
+.btn-link.targ{background:linear-gradient(135deg,#d97706,#f97316);color:#fff;}
+.btn-link:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.14);}
+.btn-close{background:rgba(0,0,0,0.05);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:.9rem;color:var(--text2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.btn-close:hover{background:rgba(0,0,0,0.1);}
 
-/* ── Stop marker ──────────────────────────────── */
-.stop-wrap { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
-.btn-stop {
-  background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.07); border-radius: 999px;
-  padding: 0.2rem 0.5rem; font-size: 0.62rem; color: var(--text3); cursor: pointer;
-  transition: all .15s; white-space: nowrap;
+/* ── Bulk buttons ─────────────────────────── */
+.bs-bulk{display:flex;gap:.35rem;padding:.6rem 1.1rem;flex-wrap:wrap;border-block-end:1px solid rgba(0,0,0,0.05);}
+.bulk-btn{
+  flex:1;min-width:0;height:32px;border-radius:999px;border:none;
+  font-size:.62rem;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:.15rem;
+  white-space:nowrap;padding:0 .7rem;
+  transition:all .15s var(--spring);
 }
-.btn-stop:hover { background: rgba(246,211,101,0.18); color: var(--gold); border-color: rgba(246,211,101,0.4); }
-.btn-stop.has-val {
-  background: linear-gradient(135deg,rgba(246,211,101,0.18),rgba(253,160,133,0.18));
-  color: #8a5010; font-weight: 600;
-  border-color: rgba(246,180,50,0.3);
-}
-.btn-stop-clear { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.8rem; padding: 0.1rem; transition: color .12s; }
-.btn-stop-clear:hover { color: #c0392b; }
-.aliya-check { font-size: 0.7rem; flex-shrink: 0; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; }
+.bulk-btn.b1{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1e40af;}
+.bulk-btn.b2{background:linear-gradient(135deg,#1a56db,#7c3aed);color:#fff;box-shadow:0 3px 10px rgba(26,86,219,0.35);}
+.bulk-btn.bt{background:linear-gradient(135deg,#d97706,#f97316);color:#fff;box-shadow:0 3px 10px rgba(217,119,6,0.35);}
+.bulk-btn.bx{background:rgba(220,38,38,0.08);color:#dc2626;border:1.5px solid rgba(220,38,38,0.18);}
+.bulk-btn:hover{transform:translateY(-1px);filter:brightness(1.05);}
+.bulk-btn:active{transform:scale(0.96);}
+.bs-body{padding:.3rem 1.1rem 2rem;}
 
-/* ── Verse picker ─────────────────────────────── */
-.verse-picker-wrap { overflow: hidden; }
-.verse-picker {
-  display: flex; gap: 0.28rem; overflow-x: auto; padding: 0.5rem 0 0.3rem;
-  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+/* ── Aliya row ────────────────────────────── */
+.aliya-row{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.5rem 0;border-block-end:1px solid rgba(0,0,0,0.05);
+  min-height:52px;
 }
-.verse-picker::-webkit-scrollbar { display: none; }
-.vchip {
-  min-width: 30px; height: 30px; border-radius: 50%; border: none;
-  background: rgba(0,0,0,0.05); color: var(--text2); font-family: 'Frank Ruhl Libre', serif;
-  font-size: 0.72rem; font-weight: 700; cursor: pointer; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .12s var(--spring); -webkit-tap-highlight-color: transparent;
+.aliya-row:last-child{border-block-end:none;}
+.aliya-idx{
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,#f2f3f8,#e8eaf2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;font-weight:700;color:var(--text3);flex-shrink:0;
 }
-.vchip:hover { background: rgba(246,211,101,0.25); color: #8a5010; transform: scale(1.1); }
-.vchip:active { transform: scale(0.92); }
-.vchip.sel { background: var(--gold-grad); color: #3a1800; box-shadow: 0 2px 10px rgba(253,160,133,0.5); transform: scale(1.12); }
+.aliya-name{font-size:.78rem;color:var(--text2);min-width:44px;}
+.aliya-actions{display:flex;gap:.28rem;margin-inline-end:auto;}
 
-/* ── Loading ──────────────────────────────────── */
-.loading {
-  min-height: 100dvh; display: flex; align-items: center; justify-content: center;
-  color: var(--text3); font-size: 0.95rem; background: #ffffff;
+/* ── Action buttons — vibrant ─────────────── */
+.act-btn{
+  height:36px;min-width:40px;border-radius:999px;
+  font-size:.73rem;font-weight:800;cursor:pointer;padding:0 .6rem;
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;-webkit-tap-highlight-color:transparent;
+  transition:box-shadow .15s;
 }
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
-@media (max-width: 400px) {
-  .act-btn { min-width: 34px; height: 30px; font-size: 0.68rem; }
-  .aliya-name { font-size: 0.72rem; min-width: 38px; }
-  .bs-head, .bs-body, .bs-bulk { padding-inline: 0.85rem; }
+.act-btn.r1.off{background:#eff6ff;color:#93b4ef;border:2px solid #bfdbfe;}
+.act-btn.r1.off:hover{background:#dbeafe;color:#1a56db;}
+.act-btn.r1.on{background:linear-gradient(135deg,#1a56db,#3b82f6);color:#fff;border:none;box-shadow:0 4px 16px rgba(26,86,219,0.5);}
+
+.act-btn.r2.off{background:#faf5ff;color:#c4a8f0;border:2px solid #e9d5ff;}
+.act-btn.r2.off:hover{background:#ede9fe;color:#7c3aed;}
+.act-btn.r2.on{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;box-shadow:0 4px 16px rgba(124,58,237,0.5);}
+
+.act-btn.tg.off{background:#fffbeb;color:#f0be6a;border:2px solid #fde68a;}
+.act-btn.tg.off:hover{background:#fef3c7;color:#d97706;}
+.act-btn.tg.on{background:linear-gradient(135deg,#d97706,#f97316);color:#fff;border:none;box-shadow:0 4px 16px rgba(217,119,6,0.55);}
+
+/* ── Stop marker ──────────────────────────── */
+.stop-wrap{display:flex;align-items:center;gap:.2rem;flex-shrink:0;}
+.btn-stop{
+  background:#f9fafb;border:1.5px solid rgba(0,0,0,0.08);border-radius:999px;
+  padding:.18rem .48rem;font-size:.6rem;color:var(--text3);cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.btn-stop:hover{background:#fef3c7;color:#d97706;border-color:#fde68a;}
+.btn-stop.has-val{background:linear-gradient(135deg,rgba(246,211,101,0.15),rgba(253,160,133,0.15));color:#8a5010;font-weight:700;border-color:rgba(246,180,50,0.35);}
+.btn-stop-clear{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem;padding:.1rem;transition:color .12s;}
+.btn-stop-clear:hover{color:#dc2626;}
+.aliya-check{font-size:.7rem;flex-shrink:0;background:linear-gradient(135deg,#f6d365,#fda085);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;}
+
+/* ── Verse picker ─────────────────────────── */
+.verse-picker-wrap{overflow:hidden;}
+.verse-picker{display:flex;gap:.25rem;overflow-x:auto;padding:.45rem 0 .3rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.verse-picker::-webkit-scrollbar{display:none;}
+.vchip{
+  min-width:32px;height:32px;border-radius:50%;border:none;
+  background:#f2f3f8;color:var(--text2);font-family:'Frank Ruhl Libre',serif;
+  font-size:.72rem;font-weight:700;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .12s var(--spring);-webkit-tap-highlight-color:transparent;
+}
+.vchip:hover{background:#fef3c7;color:#d97706;transform:scale(1.1);}
+.vchip.sel{background:linear-gradient(135deg,#f6d365,#fda085);color:#3a1800;box-shadow:0 3px 10px rgba(253,160,133,0.5);transform:scale(1.12);}
+
+/* ── Loading ──────────────────────────────── */
+.loading{min-height:100dvh;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:.95rem;background:var(--bg);}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.1);border-radius:2px;}
+@media(max-width:400px){
+  .act-btn{min-width:36px;height:32px;font-size:.68rem;}
+  .aliya-name{font-size:.72rem;min-width:38px;}
+  .bs-head,.bs-body,.bs-bulk{padding-inline:.85rem;}
+  .sc-card:last-child:nth-child(odd){gap:1.2rem;padding:1rem 1.2rem;}
 }
 </style>
 </head>
 <body>
 <div id="root"></div>
-<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 const FM = window.FramerMotion || {};
 const motion = FM.motion || { div:'div', button:'button' };
 const AnimatePresence = FM.AnimatePresence || (({children})=>children);
 
-/* ═══ DATA ════════════════════════════════════ */
+/* ═══ DATA ════════════════════════════════ */
 const SFARIM = [
   { id:'bereshit', name:'בראשית', theme:'theme-bereshit', letter:'ב', parshiot:['בראשית','נח','לך לך','וירא','חיי שרה','תולדות','ויצא','וישלח','וישב','מקץ','ויגש','ויחי'] },
   { id:'shemot',   name:'שמות',   theme:'theme-shemot',   letter:'ש', parshiot:['שמות','וארא','בא','בשלח','יתרו','משפטים','תרומה','תצוה','כי תשא','ויקהל','פקודי'] },
@@ -432,39 +383,34 @@ const SEFARIA = {
   'במדבר':'Parashat_Bamidbar','נשא':'Parashat_Nasso','בהעלותך':"Parashat_Beha'alotcha",'שלח':'Parashat_Shelach','קרח':'Parashat_Korach','חוקת':'Parashat_Chukat','בלק':'Parashat_Balak','פינחס':'Parashat_Pinchas','מטות':'Parashat_Matot','מסעי':'Parashat_Masei',
   'דברים':'Parashat_Devarim','ואתחנן':'Parashat_Vaetchanan','עקב':'Parashat_Eikev','ראה':'Parashat_Reeh','שופטים':'Parashat_Shoftim','כי תצא':'Parashat_Ki_Teitzei','כי תבוא':'Parashat_Ki_Tavo','נצבים':'Parashat_Nitzavim','וילך':'Parashat_Vayeilech','האזינו':'Parashat_Haazinu','וזאת הברכה':'Parashat_Vezot_Haberakhah',
 };
-const sefText = n => { const s=SEFARIA[n]; return s ? `https://www.sefaria.org.il/${s}?lang=he&aliyot=1` : null; };
-const sefTarg = n => { const s=SEFARIA[n]; return s ? `https://www.sefaria.org.il/${s}?lang=he&aliyot=1&with=Targum%20Onkelos` : null; };
+const sefText = n => { const s=SEFARIA[n]; return s?`https://www.sefaria.org.il/${s}?lang=he&aliyot=1`:null; };
+const sefTarg = n => { const s=SEFARIA[n]; return s?`https://www.sefaria.org.il/${s}?lang=he&aliyot=1&with=Targum%20Onkelos`:null; };
 
-/* ═══ RING META per sefer ══════════════════════ */
-const RING_META = {
-  bereshit: { c1:'#667eea', c2:'#764ba2', glow:'rgba(102,126,234,0.55)' },
-  shemot:   { c1:'#f6c843', c2:'#fda085', glow:'rgba(246,200,67,0.65)'  },
-  vayikra:  { c1:'#f093fb', c2:'#f5576c', glow:'rgba(240,147,251,0.55)' },
-  bamidbar: { c1:'#4facfe', c2:'#00d4fe', glow:'rgba(79,172,254,0.55)'  },
-  devarim:  { c1:'#f97316', c2:'#f59e0b', glow:'rgba(249,115,22,0.55)'  },
+/* ═══ RING COLORS ═════════════════════════ */
+const RING = {
+  bereshit:{ c1:'#1a56db', c2:'#0ea5e9', glow:'rgba(26,86,219,0.5)'  },
+  shemot:  { c1:'#d97706', c2:'#f97316', glow:'rgba(217,119,6,0.55)' },
+  vayikra: { c1:'#059669', c2:'#34d399', glow:'rgba(5,150,105,0.5)'  },
+  bamidbar:{ c1:'#7c3aed', c2:'#a78bfa', glow:'rgba(124,58,237,0.5)' },
+  devarim: { c1:'#dc2626', c2:'#f97316', glow:'rgba(220,38,38,0.5)'  },
 };
 
-/* ═══ HELPERS ═════════════════════════════════ */
-function getHebrewYear() { try { return new window.hebcal.HDate(new Date()).getFullYear(); } catch { return 5786; } }
-function yearStr(y) { return ({5783:'תשפ"ג',5784:'תשפ"ד',5785:'תשפ"ה',5786:'תשפ"ו',5787:'תשפ"ז',5788:'תשפ"ח'})[y]||String(y); }
-function detectParasha() {
-  try {
-    const events = window.hebcal.HebrewCalendar.calendar({start:new Date(),end:new Date(Date.now()+8*86400000),noHolidays:true,sedrot:true,il:false});
-    for (const ev of events) {
-      const r = ev.render?.('he')||''; if (!r.startsWith('פרשת')) continue;
-      const n = r.replace('פרשת ','').trim();
-      for (const s of SFARIM) { const f=s.parshiot.find(p=>p===n||n.startsWith(p)); if(f) return f; }
-    }
-  } catch {} return null;
+/* ═══ HELPERS ════════════════════════════ */
+function getHebrewYear(){try{return new window.hebcal.HDate(new Date()).getFullYear();}catch{return 5786;}}
+function yearStr(y){return({5783:'תשפ"ג',5784:'תשפ"ד',5785:'תשפ"ה',5786:'תשפ"ו',5787:'תשפ"ז',5788:'תשפ"ח'})[y]||String(y);}
+function detectParasha(){
+  try{
+    const ev=window.hebcal.HebrewCalendar.calendar({start:new Date(),end:new Date(Date.now()+8*86400000),noHolidays:true,sedrot:true,il:false});
+    for(const e of ev){const r=e.render?.('he')||'';if(!r.startsWith('פרשת'))continue;const n=r.replace('פרשת ','').trim();for(const s of SFARIM){const f=s.parshiot.find(p=>p===n||n.startsWith(p));if(f)return f;}}
+  }catch{}return null;
 }
-function toHebNum(n) {
-  if(n===15)return'טו'; if(n===16)return'טז';
-  const ones=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
-  const tens=['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+function toHebNum(n){
+  if(n===15)return'טו';if(n===16)return'טז';
+  const ones=['','א','ב','ג','ד','ה','ו','ז','ח','ט'],tens=['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
   let r='',x=n;
   if(x>=100){r+=['','ק','ר','ש','ת'][Math.floor(x/100)];x%=100;}
   if(x>=10){r+=tens[Math.floor(x/10)];x%=10;}
-  if(x>0){r+=ones[x];} return r;
+  if(x>0){r+=ones[x];}return r;
 }
 function aliyaDone(a){if(!a)return 0;return(a.r1?1:0)+(a.r2?1:0)+(a.tg?1:0);}
 function parshaStats(prog,name){let d=0;for(let i=1;i<=7;i++)d+=aliyaDone((prog[name]||{})[i]);return{done:d,total:21};}
@@ -474,108 +420,170 @@ function globalStats(prog){
   for(const s of SFARIM)for(const n of s.parshiot){
     let all=true;for(let i=1;i<=7;i++){const a=(prog[n]||{})[i]||{};if(a.r1)r1++;if(a.r2)r2++;if(a.tg)tg++;if(!a.r1||!a.r2||!a.tg)all=false;}
     if(all)complete++;else missing++;
-  } return{r1,r2,tg,complete,missing};
+  }return{r1,r2,tg,complete,missing};
 }
 
-/* ═══ FIREBASE ════════════════════════════════ */
+/* ═══ FIREBASE ═══════════════════════════ */
 async function fbSave(uid,prog){try{const{db,doc,setDoc}=window._fb;await setDoc(doc(db,'users',uid),{'mikra-progress':JSON.stringify(prog)},{merge:true});}catch(e){console.error(e);}}
 async function fbLoad(uid){
   try{const{db,doc,getDoc}=window._fb;const snap=await getDoc(doc(db,'users',uid));
     if(snap.exists()){const r=snap.data()['mikra-progress'];return r?JSON.parse(r):{};}return{};
-  }catch(e){console.error(e);if(e.code==='permission-denied')alert('⚠️ Firebase: אין הרשאה. עדכן כללי Firestore.');return null;}
+  }catch(e){console.error(e);if(e.code==='permission-denied')alert('⚠️ Firebase: אין הרשאה.');return null;}
 }
 
-/* ═══ SEFER DONUT RING ════════════════════════ */
-function SeferRing({ sefer, pct }) {
-  const R = 17, size = 44, cx = 22, cy = 22;
-  const circ = 2 * Math.PI * R;
-  const offset = circ * (1 - pct / 100);
-  const meta = RING_META[sefer.id] || { c1:'#667eea', c2:'#764ba2', glow:'rgba(102,126,234,0.5)' };
-  const isComplete = pct === 100;
-  const gradId = `rg-${sefer.id}`;
-  const strokeColor = isComplete ? 'url(#rg-gold)' : `url(#${gradId})`;
-  const glowFilter = isComplete
-    ? 'drop-shadow(0 0 7px rgba(246,211,101,0.85)) drop-shadow(0 0 14px rgba(253,160,133,0.5))'
-    : `drop-shadow(0 0 5px ${meta.glow})`;
+/* ═══ BIG DONUT RING ════════════════════ */
+function BigRing({ sefer, pct, size=90 }) {
+  const R = size*0.38, cx = size/2, cy = size/2;
+  const circ = 2*Math.PI*R;
+  const offset = circ*(1-pct/100);
+  const m = RING[sefer.id]||RING.bereshit;
+  const isComplete = pct===100;
+  const gid = `bg-${sefer.id}`;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{overflow:'visible',flexShrink:0}}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2={size} y2={size} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={isComplete?'#f6d365':m.c1}/>
+          <stop offset="100%" stopColor={isComplete?'#fda085':m.c2}/>
+        </linearGradient>
+      </defs>
+      <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth={size*0.065}/>
+      <circle cx={cx} cy={cy} r={R} fill="none"
+        stroke={`url(#${gid})`}
+        strokeWidth={size*0.072}
+        strokeLinecap="round"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        transform={`rotate(-90 ${cx} ${cy})`}
+        style={{
+          filter:`drop-shadow(0 0 ${isComplete?8:5}px ${isComplete?'rgba(246,211,101,0.8)':m.glow})`,
+          transition:'stroke-dashoffset 0.9s cubic-bezier(0.16,1,0.3,1)'
+        }}
+      />
+      {isComplete ? (
+        <text x={cx} y={cy+6} textAnchor="middle" fontSize={size*0.22} fontWeight="900" fill="#c6891a"
+          style={{filter:'drop-shadow(0 0 6px rgba(246,211,101,0.9))'}}>✓</text>
+      ) : pct>0 ? (
+        <text x={cx} y={cy+5} textAnchor="middle" fontSize={size*0.175} fontWeight="700" fill={m.c1} fontFamily="Heebo,sans-serif">{pct}%</text>
+      ) : (
+        <text x={cx} y={cy+7} textAnchor="middle" fontSize={size*0.26} fontWeight="900" fill="rgba(0,0,0,0.18)" fontFamily="Frank Ruhl Libre,serif">{sefer.letter}</text>
+      )}
+    </svg>
+  );
+}
+
+/* ═══ SEFER CARD ════════════════════════ */
+function SeferCard({ sefer, prog, isSelected, onClick, isLast }) {
+  const {done,total} = seferStats(prog,sefer);
+  const pct = Math.round(done/total*100);
+  const remaining = sefer.parshiot.length - sefer.parshiot.filter(n=>parshaStats(prog,n).done===21).length;
 
   return (
     <motion.div
-      style={{ width: size, height: size, flexShrink: 0, cursor: 'default' }}
-      whileHover={{ scale: 1.18 }}
-      transition={{ type:'spring', stiffness:400, damping:22 }}
-      title={`${pct}% הושלם`}
+      className={`sc-card ${sefer.theme}${isSelected?' selected':''}${isLast?' last-card':''}`}
+      onClick={onClick}
+      whileTap={{scale:0.97}}
+      transition={{type:'spring',stiffness:400,damping:25}}
     >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow:'visible' }}>
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2={size} y2={size} gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor={meta.c1}/>
-            <stop offset="100%" stopColor={meta.c2}/>
-          </linearGradient>
-          <linearGradient id="rg-gold" x1="0" y1="0" x2={size} y2={size} gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#f6d365"/>
-            <stop offset="100%" stopColor="#fda085"/>
-          </linearGradient>
-        </defs>
-        {/* Track */}
-        <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth="3"/>
-        {/* Progress arc */}
-        <circle
-          cx={cx} cy={cy} r={R} fill="none"
-          stroke={strokeColor}
-          strokeWidth={isComplete ? 3.5 : 3}
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          transform={`rotate(-90 ${cx} ${cy})`}
-          style={{
-            filter: glowFilter,
-            transition: 'stroke-dashoffset 0.9s cubic-bezier(0.16,1,0.3,1), filter 0.4s'
-          }}
-        />
-        {/* Center label */}
-        {isComplete ? (
-          <text x={cx} y={cy+5} textAnchor="middle" fontSize="14" fontWeight="900" fill="#c6891a"
-            style={{ filter:'drop-shadow(0 0 5px rgba(246,211,101,0.9))' }}>✓</text>
-        ) : pct > 0 ? (
-          <text x={cx} y={cy+4} textAnchor="middle" fontSize="9" fontWeight="700"
-            fill={meta.c1} fontFamily="Heebo,sans-serif">{pct}%</text>
-        ) : (
-          <text x={cx} y={cy+5} textAnchor="middle" fontSize="13" fontWeight="900"
-            fill="rgba(0,0,0,0.22)" fontFamily="Frank Ruhl Libre,serif">{sefer.letter}</text>
-        )}
-      </svg>
+      <div className="sc-name">{sefer.name}</div>
+      <BigRing sefer={sefer} pct={pct} size={isLast?80:86}/>
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'.3rem'}}>
+        <span className="sc-pct-label">{pct}%</span>
+        <span className="sc-sub">{remaining>0?`${remaining} פרשיות נותרו`:'הושלם! ✓'}</span>
+      </div>
     </motion.div>
   );
 }
 
-/* ═══ COMPONENTS ══════════════════════════════ */
+/* ═══ PARASHA CARD ═══════════════════════ */
+function ParshaCard({ name, theme, prog, isCurrent, onOpen }) {
+  const {done,total}=parshaStats(prog,name);
+  const pct=Math.round(done/total*100);
+  const isComplete=done===total, hasProg=done>0;
+  return (
+    <motion.div
+      className={`p-card ${theme}${isComplete?' is-complete':''}${hasProg?' has-prog':''}`}
+      onClick={onOpen}
+      whileHover={{y:-3,boxShadow:'0 6px 20px rgba(0,0,0,0.1)'}}
+      whileTap={{scale:0.97}}
+      transition={{type:'spring',stiffness:400,damping:28}}
+    >
+      {isCurrent&&<div className="now-chip">השבוע</div>}
+      <div className="p-name">{name}</div>
+      <div className="p-dots">
+        {[1,2,3,4,5,6,7].map(i=>{
+          const d=aliyaDone((prog[name]||{})[i]);
+          return <div key={i} className={`p-dot d${d}`}/>;
+        })}
+      </div>
+      <div className="p-prog">
+        <div className="p-prog-fill" style={{
+          width:`${pct}%`,
+          background:isComplete?'linear-gradient(90deg,#f6d365,#fda085)':'var(--sg)',
+          boxShadow:isComplete?'0 0 8px rgba(246,211,101,0.6)':'0 0 6px var(--sglow)'
+        }}/>
+      </div>
+    </motion.div>
+  );
+}
 
+/* ═══ PARASHA SECTION ════════════════════ */
+function ParshaSection({ sefer, prog, currentParasha, filterMissing, onOpen }) {
+  const visible = filterMissing
+    ? sefer.parshiot.filter(n=>parshaStats(prog,n).done<21)
+    : sefer.parshiot;
+  if(filterMissing&&visible.length===0)return null;
+  return (
+    <motion.div
+      className={`parsha-section ${sefer.theme}`}
+      initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} exit={{opacity:0,y:12}}
+      transition={{type:'spring',stiffness:380,damping:32}}
+    >
+      <div className="ps-header">
+        <div>
+          <div className="ps-header-name">פרשיות {sefer.name}</div>
+          <div className="ps-header-sub">{sefer.parshiot.length} פרשיות · לחץ להמשיך</div>
+        </div>
+      </div>
+      <div className="ps-body">
+        <div className="parasha-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:'.6rem'}}>
+          {visible.map(name=>(
+            <ParshaCard key={name} name={name} theme={sefer.theme} prog={prog}
+              isCurrent={currentParasha===name} onOpen={()=>onOpen(name,sefer.theme)}/>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ═══ ALIYA ROW ══════════════════════════ */
 function AliyaRow({ name, num, label, a, onToggle, onStop }) {
-  const [showPicker, setShowPicker] = useState(false);
-  const lvl = aliyaDone(a);
-  const VERSES = Array.from({length:50},(_,i)=>i+1);
-  function pickVerse(v){ onStop(name,num,toHebNum(v)); setShowPicker(false); }
-  function clearStop(e){ e.stopPropagation(); onStop(name,num,''); setShowPicker(false); }
+  const [showPicker,setShowPicker]=useState(false);
+  const lvl=aliyaDone(a);
+  const VERSES=Array.from({length:50},(_,i)=>i+1);
+  function pickVerse(v){onStop(name,num,toHebNum(v));setShowPicker(false);}
+  function clearStop(e){e.stopPropagation();onStop(name,num,'');setShowPicker(false);}
   return (
     <div>
       <div className="aliya-row">
         <div className="aliya-idx">{num}</div>
         <span className="aliya-name">{label}</span>
         <div className="aliya-actions">
-          <motion.button className={`act-btn r1 ${a.r1?'on':'off'}`} whileTap={{scale:0.88}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'r1')}>1</motion.button>
-          <motion.button className={`act-btn r2 ${a.r2?'on':'off'}`} whileTap={{scale:0.88}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'r2')}>2</motion.button>
-          <motion.button className={`act-btn tg ${a.tg?'on':'off'}`} whileTap={{scale:0.88}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'tg')}>תרג׳</motion.button>
+          <motion.button className={`act-btn r1 ${a.r1?'on':'off'}`} whileTap={{scale:0.87}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'r1')}>1</motion.button>
+          <motion.button className={`act-btn r2 ${a.r2?'on':'off'}`} whileTap={{scale:0.87}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'r2')}>2</motion.button>
+          <motion.button className={`act-btn tg ${a.tg?'on':'off'}`} whileTap={{scale:0.87}} transition={{type:'spring',stiffness:500,damping:20}} onClick={()=>onToggle(name,num,'tg')}>תרג׳</motion.button>
         </div>
         <div className="stop-wrap">
           <motion.button className={`btn-stop${a.stop?' has-val':''}`} whileTap={{scale:0.9}} onClick={()=>setShowPicker(v=>!v)} title="סמן פסוק עצירה">
-            {a.stop ? `פס׳ ${a.stop}` : '📍'}
+            {a.stop?`פס׳ ${a.stop}`:'📍'}
           </motion.button>
-          {a.stop && <button className="btn-stop-clear" onClick={clearStop}>×</button>}
+          {a.stop&&<button className="btn-stop-clear" onClick={clearStop}>×</button>}
         </div>
-        {lvl===3 && <span className="aliya-check">✓</span>}
+        {lvl===3&&<span className="aliya-check">✓</span>}
       </div>
       <AnimatePresence>
-        {showPicker && (
+        {showPicker&&(
           <motion.div className="verse-picker-wrap" initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} transition={{type:'spring',stiffness:380,damping:32}}>
             <div className="verse-picker">
               {VERSES.map(v=>(
@@ -589,19 +597,18 @@ function AliyaRow({ name, num, label, a, onToggle, onStop }) {
   );
 }
 
+/* ═══ BOTTOM SHEET ═══════════════════════ */
 function BottomSheet({ name, theme, prog, onClose, onToggle, onBulk, onStop }) {
-  const aliyaData = prog[name]||{};
-  const {done,total} = parshaStats(prog,name);
-  const pct = Math.round(done/total*100);
-  useEffect(()=>{ const p=document.body.style.overflow; document.body.style.overflow='hidden'; return()=>{document.body.style.overflow=p;}; },[]);
+  const aliyaData=prog[name]||{};
+  const {done,total}=parshaStats(prog,name);
+  const pct=Math.round(done/total*100);
+  useEffect(()=>{const p=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=p;};},[]);
   return (
     <motion.div className="bs-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.2}} onClick={e=>e.target===e.currentTarget&&onClose()}>
       <motion.div className={`bs-sheet ${theme}`} initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}} transition={{type:'spring',stiffness:380,damping:36}}>
         <div className="bs-handle"/>
         <div className="bs-head">
-          <div style={{flex:1}}>
-            <div className="bs-title">{name}</div>
-          </div>
+          <div style={{flex:1}}><div className="bs-title">{name}</div></div>
           <div className="bs-prog">
             <span className="bs-prog-n" style={{color:pct===100?'#c6891a':'var(--sc)'}}>{pct}%</span>
             <span className="bs-prog-l">{done}/{total}</span>
@@ -620,7 +627,7 @@ function BottomSheet({ name, theme, prog, onClose, onToggle, onBulk, onStop }) {
         </div>
         <div className="bs-body">
           {ALIYA_LABELS.map((label,idx)=>{
-            const num=idx+1; const a=aliyaData[num]||{};
+            const num=idx+1;const a=aliyaData[num]||{};
             return <AliyaRow key={num} name={name} num={num} label={label} a={a} onToggle={onToggle} onStop={onStop}/>;
           })}
         </div>
@@ -629,87 +636,19 @@ function BottomSheet({ name, theme, prog, onClose, onToggle, onBulk, onStop }) {
   );
 }
 
-function ParshaCard({ name, theme, prog, isCurrent, filterMissing, onOpen }) {
-  const {done,total} = parshaStats(prog,name);
-  const pct = Math.round(done/total*100);
-  const isComplete = done===total;
-  const hasProg = done>0;
-  return (
-    <motion.div
-      className={`p-card ${theme}${isCurrent?' is-current':''}${isComplete?' is-complete':''}${hasProg?' has-prog':''}`}
-      onClick={onOpen}
-      whileHover={{y:-4, boxShadow:'0 6px 24px rgba(0,0,0,0.1), 0 14px 40px rgba(0,0,0,0.07)'}}
-      whileTap={{scale:0.97}}
-      transition={{type:'spring',stiffness:400,damping:28}}
-    >
-      {isCurrent && <div className="now-chip">השבוע</div>}
-      <div className="p-name">{name}</div>
-      <div className="p-dots">
-        {[1,2,3,4,5,6,7].map(i=>{
-          const d=aliyaDone((prog[name]||{})[i]);
-          return <div key={i} className={`p-dot d${d}`}/>;
-        })}
-      </div>
-      <div className="p-prog">
-        <div className="p-prog-fill" style={{
-          width:`${pct}%`,
-          background: isComplete ? 'linear-gradient(90deg,#f6d365,#fda085)' : 'var(--sg)',
-          boxShadow: isComplete ? '0 0 8px rgba(246,211,101,0.6)' : `0 0 6px var(--sglow, rgba(0,0,0,0.15))`
-        }}/>
-      </div>
-    </motion.div>
-  );
-}
-
-function SeferSection({ sefer, prog, currentParasha, filterMissing, onOpen, defaultOpen }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const {done,total} = seferStats(prog,sefer);
-  const pct = Math.round(done/total*100);
-  const visible = filterMissing ? sefer.parshiot.filter(n=>parshaStats(prog,n).done<21) : sefer.parshiot;
-  if (filterMissing&&visible.length===0) return null;
-  return (
-    <div className={`sefer-section ${sefer.theme}`}>
-      <motion.div className="sefer-hdr" onClick={()=>setOpen(v=>!v)} whileTap={{scale:0.99}}>
-        <SeferRing sefer={sefer} pct={pct}/>
-        <span className="sefer-label">{sefer.name}</span>
-        <span className="sefer-pct">{done}/{total} · {pct}%</span>
-        <span className={`sefer-chevron${open?' open':''}`}>▾</span>
-      </motion.div>
-      <AnimatePresence>
-        {open && (
-          <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{type:'spring',stiffness:350,damping:30}}>
-            <div className="sefer-bar">
-              <div className="sefer-bar-fill" style={{
-                width:`${pct}%`,
-                boxShadow: pct>0 ? `0 0 8px var(--sglow, rgba(0,0,0,0.2))` : 'none'
-              }}/>
-            </div>
-            <div className="parasha-grid">
-              {visible.map(name=>(
-                <ParshaCard key={name} name={name} theme={sefer.theme} prog={prog}
-                  isCurrent={currentParasha===name} filterMissing={filterMissing}
-                  onOpen={()=>onOpen(name,sefer.theme)}/>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
+/* ═══ STATS STRIP ════════════════════════ */
 function StatsStrip({ prog }) {
-  const s = globalStats(prog);
-  const pct = Math.round((s.r1+s.r2+s.tg)/(54*21)*100);
+  const s=globalStats(prog);
+  const pct=Math.round((s.r1+s.r2+s.tg)/(54*21)*100);
   return (
     <div className="stats-strip">
-      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#667eea,#764ba2)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.r1}</span><span className="stat-l">קריאה א׳</span></div>
+      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#1a56db,#0ea5e9)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.r1}</span><span className="stat-l">קריאה א׳</span></div>
       <div className="stat-div"/>
-      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#5a4fcf,#764ba2)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.r2}</span><span className="stat-l">קריאה ב׳</span></div>
+      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#7c3aed,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.r2}</span><span className="stat-l">קריאה ב׳</span></div>
       <div className="stat-div"/>
-      <div className="stat"><span className="stat-n" style={{background:'var(--gold-grad)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.tg}</span><span className="stat-l">תרגום</span></div>
+      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#d97706,#f97316)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.tg}</span><span className="stat-l">תרגום</span></div>
       <div className="stat-div"/>
-      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#43e97b,#38ef7d)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.complete}</span><span className="stat-l">שלמות</span></div>
+      <div className="stat"><span className="stat-n" style={{background:'linear-gradient(135deg,#059669,#34d399)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>{s.complete}</span><span className="stat-l">שלמות</span></div>
       <div className="stat-div"/>
       <div className="stat-bar-wrap">
         <div className="stat-bar-track"><div className="stat-bar-fill" style={{width:`${pct}%`}}/></div>
@@ -719,12 +658,13 @@ function StatsStrip({ prog }) {
   );
 }
 
-/* ═══ APP ═════════════════════════════════════ */
+/* ═══ APP ════════════════════════════════ */
 function App() {
   const [user,setUser]=useState(null);
   const [loading,setLoading]=useState(true);
   const [prog,setProg]=useState({});
   const [sheet,setSheet]=useState(null);
+  const [openSefer,setOpenSefer]=useState('bereshit');
   const [filterMissing,setFilterMissing]=useState(false);
   const saveTimer=useRef(null);
   const curYear=useRef(getHebrewYear()).current;
@@ -750,16 +690,19 @@ function App() {
   function toggleAliya(parasha,num,field){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};n[parasha][num][field]=!n[parasha][num][field];persist(n);return n;});}
   function bulkMark(parasha,field,value){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(field===null){n[parasha]={};}else{for(let i=1;i<=7;i++){if(!n[parasha][i])n[parasha][i]={};n[parasha][i][field]=value;}}persist(n);return n;});}
   function updateStop(parasha,num,val){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};if(val)n[parasha][num].stop=val;else delete n[parasha][num].stop;persist(n);return n;});}
+  function toggleSefer(id){setOpenSefer(o=>o===id?null:id);}
+
+  const selectedSefer = SFARIM.find(s=>s.id===openSefer);
 
   if(loading)return <div className="loading"><motion.div animate={{opacity:[0.4,1,0.4]}} transition={{duration:1.5,repeat:Infinity}}>טוען…</motion.div></div>;
 
   if(!user) return (
     <div className="signin-bg">
       <motion.div className="signin-box" initial={{opacity:0,y:40,scale:0.95}} animate={{opacity:1,y:0,scale:1}} transition={{type:'spring',stiffness:300,damping:28}}>
-        <motion.div className="signin-icon" animate={{backgroundPosition:['0% 50%','100% 50%','0% 50%']}} transition={{duration:4,repeat:Infinity}} style={{backgroundSize:'200%'}}>שמו״ת</motion.div>
+        <div className="signin-icon">שמו״ת</div>
         <div className="signin-title">שניים מקרא ואחד תרגום</div>
         <div className="signin-desc">עקוב אחר כל עליה, כל קריאה —<br/>ותמיד תדע בדיוק היכן עצרת.</div>
-        <motion.button className="btn-google" onClick={signIn} whileHover={{y:-2}} whileTap={{scale:0.97}} transition={{type:'spring',stiffness:400,damping:20}}>
+        <motion.button className="btn-google" onClick={signIn} whileHover={{y:-2}} whileTap={{scale:0.97}}>
           <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
           כניסה עם Google
         </motion.button>
@@ -776,31 +719,45 @@ function App() {
         </div>
         <div className="bar-end">
           <span className="badge-year">{yearStr(curYear)}</span>
-          <motion.button className={`btn-missing${filterMissing?' on':''}`} onClick={()=>setFilterMissing(v=>!v)} whileTap={{scale:0.93}} transition={{type:'spring',stiffness:400,damping:20}}>
+          <motion.button className={`btn-missing${filterMissing?' on':''}`} onClick={()=>setFilterMissing(v=>!v)} whileTap={{scale:0.93}}>
             ⚠ {missing}
           </motion.button>
-          {user.photoURL && <img className="user-av" src={user.photoURL} alt=""/>}
+          {user.photoURL&&<img className="user-av" src={user.photoURL} alt=""/>}
           <button className="btn-icon" onClick={signOut} title="יציאה">↩</button>
         </div>
       </header>
       <StatsStrip prog={prog}/>
       <main className="main">
         <AnimatePresence>
-          {filterMissing && (
+          {filterMissing&&(
             <motion.div className="filter-notice" initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}}>
               <span>מציג פרשות עם חוסרים · {missing} פרשות</span>
-              <button className="btn-icon" style={{color:'#c0392b',width:24,height:24,fontSize:'0.8rem'}} onClick={()=>setFilterMissing(false)}>✕</button>
+              <button className="btn-icon" style={{color:'#dc2626',width:22,height:22,fontSize:'.78rem'}} onClick={()=>setFilterMissing(false)}>✕</button>
             </motion.div>
           )}
         </AnimatePresence>
-        {SFARIM.map((sefer,i)=>(
-          <SeferSection key={sefer.id} sefer={sefer} prog={prog} currentParasha={curParasha}
-            filterMissing={filterMissing} onOpen={(name,theme)=>setSheet({name,theme})}
-            defaultOpen={filterMissing?sefer.parshiot.some(p=>parshaStats(prog,p).done<21):sefer.parshiot.includes(curParasha)||i===0}/>
-        ))}
+
+        <div className="sefer-grid">
+          {SFARIM.map((sefer,i)=>(
+            <SeferCard key={sefer.id} sefer={sefer} prog={prog}
+              isSelected={openSefer===sefer.id}
+              isLast={i===SFARIM.length-1&&SFARIM.length%2===1}
+              onClick={()=>toggleSefer(sefer.id)}
+            />
+          ))}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {selectedSefer&&(
+            <ParshaSection key={selectedSefer.id} sefer={selectedSefer} prog={prog}
+              currentParasha={curParasha} filterMissing={filterMissing}
+              onOpen={(name,theme)=>setSheet({name,theme})}/>
+          )}
+        </AnimatePresence>
       </main>
+
       <AnimatePresence>
-        {sheet && (
+        {sheet&&(
           <BottomSheet key="sheet" name={sheet.name} theme={sheet.theme} prog={prog}
             onClose={()=>setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop}/>
         )}

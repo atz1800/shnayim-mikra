@@ -1,4 +1,4 @@
-const CACHE = 'shmot-v3';
+const CACHE = 'shmot-v4';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
