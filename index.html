@@ -356,6 +356,26 @@ a{color:inherit;text-decoration:none;}
   .bs-head,.bs-body,.bs-bulk{padding-inline:.85rem;}
   .sc-card:last-child:nth-child(odd){gap:1.2rem;padding:1rem 1.2rem;}
 }
+
+/* ── Parshot view ─────────────────────── */
+.psv-header{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.85rem 1rem;
+  background:#fff;
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-card);
+  margin-block-end:.85rem;
+}
+.psv-back-btn{
+  display:flex;align-items:center;gap:.2rem;
+  background:var(--sl);border:none;border-radius:999px;
+  padding:.38rem .85rem;font-size:.8rem;font-weight:700;color:var(--sc);
+  cursor:pointer;flex-shrink:0;white-space:nowrap;
+  box-shadow:0 2px 8px var(--sglow);
+}
+.psv-info{flex:1;min-width:0;}
+.psv-name{font-family:'Frank Ruhl Libre',serif;font-size:1.2rem;font-weight:900;color:var(--text1);}
+.psv-sub{font-size:.63rem;color:var(--text3);margin-top:.1rem;}
 </style>
 </head>
 <body>
@@ -658,13 +678,43 @@ function StatsStrip({ prog }) {
   );
 }
 
+/* ═══ PARSHOT VIEW ═══════════════════════ */
+function ParshotView({ sefer, prog, currentParasha, filterMissing, onOpen, onBack }) {
+  const {done,total}=seferStats(prog,sefer);
+  const pct=Math.round(done/total*100);
+  const visible=filterMissing?sefer.parshiot.filter(n=>parshaStats(prog,n).done<21):sefer.parshiot;
+  return (
+    <motion.div
+      className={sefer.theme}
+      initial={{opacity:0,y:28}} animate={{opacity:1,y:0}} exit={{opacity:0,y:12}}
+      transition={{type:'spring',stiffness:380,damping:32}}
+      style={{maxWidth:700,margin:'0 auto',padding:'0 1rem 5rem'}}
+    >
+      <div className="psv-header">
+        <motion.button className="psv-back-btn" onClick={onBack} whileTap={{scale:0.93}}>‹ חזרה</motion.button>
+        <BigRing sefer={sefer} pct={pct} size={52}/>
+        <div className="psv-info">
+          <div className="psv-name">{sefer.name}</div>
+          <div className="psv-sub">{done}/{total} · {pct}% · {sefer.parshiot.length} פרשיות</div>
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:'.6rem'}}>
+        {visible.map(name=>(
+          <ParshaCard key={name} name={name} theme={sefer.theme} prog={prog}
+            isCurrent={currentParasha===name} onOpen={()=>onOpen(name,sefer.theme)}/>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 /* ═══ APP ════════════════════════════════ */
 function App() {
   const [user,setUser]=useState(null);
   const [loading,setLoading]=useState(true);
   const [prog,setProg]=useState({});
   const [sheet,setSheet]=useState(null);
-  const [openSefer,setOpenSefer]=useState('bereshit');
+  const [selectedSefer,setSelectedSefer]=useState(null);
   const [filterMissing,setFilterMissing]=useState(false);
   const saveTimer=useRef(null);
   const curYear=useRef(getHebrewYear()).current;
@@ -690,10 +740,6 @@ function App() {
   function toggleAliya(parasha,num,field){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};n[parasha][num][field]=!n[parasha][num][field];persist(n);return n;});}
   function bulkMark(parasha,field,value){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(field===null){n[parasha]={};}else{for(let i=1;i<=7;i++){if(!n[parasha][i])n[parasha][i]={};n[parasha][i][field]=value;}}persist(n);return n;});}
   function updateStop(parasha,num,val){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};if(val)n[parasha][num].stop=val;else delete n[parasha][num].stop;persist(n);return n;});}
-  function toggleSefer(id){setOpenSefer(o=>o===id?null:id);}
-
-  const selectedSefer = SFARIM.find(s=>s.id===openSefer);
-
   if(loading)return <div className="loading"><motion.div animate={{opacity:[0.4,1,0.4]}} transition={{duration:1.5,repeat:Infinity}}>טוען…</motion.div></div>;
 
   if(!user) return (
@@ -727,34 +773,37 @@ function App() {
         </div>
       </header>
       <StatsStrip prog={prog}/>
-      <main className="main">
-        <AnimatePresence>
-          {filterMissing&&(
-            <motion.div className="filter-notice" initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}}>
-              <span>מציג פרשות עם חוסרים · {missing} פרשות</span>
-              <button className="btn-icon" style={{color:'#dc2626',width:22,height:22,fontSize:'.78rem'}} onClick={()=>setFilterMissing(false)}>✕</button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="sefer-grid">
-          {SFARIM.map((sefer,i)=>(
-            <SeferCard key={sefer.id} sefer={sefer} prog={prog}
-              isSelected={openSefer===sefer.id}
-              isLast={i===SFARIM.length-1&&SFARIM.length%2===1}
-              onClick={()=>toggleSefer(sefer.id)}
-            />
-          ))}
-        </div>
-
-        <AnimatePresence mode="wait">
-          {selectedSefer&&(
-            <ParshaSection key={selectedSefer.id} sefer={selectedSefer} prog={prog}
-              currentParasha={curParasha} filterMissing={filterMissing}
-              onOpen={(name,theme)=>setSheet({name,theme})}/>
-          )}
-        </AnimatePresence>
-      </main>
+      <AnimatePresence mode="wait">
+        {!selectedSefer ? (
+          <motion.main key="sfarim" className="main"
+            initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+            transition={{duration:0.14}}>
+            <AnimatePresence>
+              {filterMissing&&(
+                <motion.div className="filter-notice" initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}}>
+                  <span>מציג פרשות עם חוסרים · {missing} פרשות</span>
+                  <button className="btn-icon" style={{color:'#dc2626',width:22,height:22,fontSize:'.78rem'}} onClick={()=>setFilterMissing(false)}>✕</button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div className="sefer-grid">
+              {SFARIM.map((sefer,i)=>(
+                <SeferCard key={sefer.id} sefer={sefer} prog={prog}
+                  isSelected={false}
+                  isLast={i===SFARIM.length-1&&SFARIM.length%2===1}
+                  onClick={()=>setSelectedSefer(sefer)}
+                />
+              ))}
+            </div>
+          </motion.main>
+        ) : (
+          <ParshotView key={selectedSefer.id} sefer={selectedSefer} prog={prog}
+            currentParasha={curParasha} filterMissing={filterMissing}
+            onOpen={(name,theme)=>setSheet({name,theme})}
+            onBack={()=>setSelectedSefer(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {sheet&&(
