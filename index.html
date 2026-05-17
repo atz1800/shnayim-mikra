@@ -384,7 +384,7 @@ a{color:inherit;text-decoration:none;}
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 const FM = window.FramerMotion || {};
-const motion = FM.motion || { div:'div', button:'button' };
+const motion = FM.motion || { div:'div', button:'button', main:'main' };
 const AnimatePresence = FM.AnimatePresence || (({children})=>children);
 
 /* ═══ DATA ════════════════════════════════ */
@@ -775,7 +775,7 @@ function App() {
       <StatsStrip prog={prog}/>
       <AnimatePresence mode="wait">
         {!selectedSefer ? (
-          <motion.main key="sfarim" className="main"
+          <motion.div key="sfarim" className="main"
             initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
             transition={{duration:0.14}}>
             <AnimatePresence>
@@ -795,7 +795,7 @@ function App() {
                 />
               ))}
             </div>
-          </motion.main>
+          </motion.div>
         ) : (
           <ParshotView key={selectedSefer.id} sefer={selectedSefer} prog={prog}
             currentParasha={curParasha} filterMissing={filterMissing}
