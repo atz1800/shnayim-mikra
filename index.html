@@ -347,11 +347,14 @@ a{color:inherit;text-decoration:none;}
 .vchip.sel{background:linear-gradient(135deg,#f6d365,#fda085);color:#3a1800;box-shadow:0 3px 10px rgba(253,160,133,0.5);transform:scale(1.12);}
 
 /* ── Splash screen ────────────────────────── */
+#html-splash,
 .splash{
-  min-height:100dvh;display:flex;flex-direction:column;
+  position:fixed;inset:0;z-index:999;
+  display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:1.5rem;
   background:linear-gradient(160deg,#eef2ff 0%,#f2f3f8 60%,#fff7ed 100%);
 }
+.splash{position:relative;min-height:100dvh;}
 .splash-logo{
   width:108px;height:108px;
   background:linear-gradient(135deg,#1a56db,#0ea5e9);
@@ -421,6 +424,13 @@ a{color:inherit;text-decoration:none;}
 </style>
 </head>
 <body>
+<div id="html-splash">
+  <div class="splash-logo"><span class="splash-heb">שמ</span></div>
+  <div class="splash-title">שניים מקרא ואחד תרגום</div>
+  <div class="splash-dots">
+    <div class="splash-dot"></div><div class="splash-dot"></div><div class="splash-dot"></div>
+  </div>
+</div>
 <div id="root"></div>
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(()=>{});</script>
 <script type="text/babel">
@@ -762,6 +772,8 @@ function App() {
   const curYear=useRef(getHebrewYear()).current;
   const curParasha=useRef(detectParasha()).current;
   const {missing}=globalStats(prog);
+
+  useEffect(()=>{ document.getElementById('html-splash')?.remove(); },[]);
 
   useEffect(()=>{
     const {auth,onAuthStateChanged,getRedirectResult}=window._fb;
