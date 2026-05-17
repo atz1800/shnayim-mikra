@@ -934,7 +934,7 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin }) {
       <div className="rv-vnum">
         <span>
           {isStop&&<span className="rv-stop-chip">עצרתי כאן</span>}
-          {v.chap}:{v.verse}
+          {toHebNum(v.chap)}:{toHebNum(v.verse)}
         </span>
         <button className={`rv-pin${isStop?' on':''}`} onClick={onPin} title="סמן עצירה">📍</button>
       </div>
@@ -1071,14 +1071,15 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
               isStop={stopKey===v.key} onPin={()=>togglePin(v.key)}/>
           ))}
           {!loading&&!error&&mode==='continuous'&&verses.length>0&&(
-            <div dir="rtl" style={{fontFamily:"'Frank Ruhl Libre',serif",fontSize,lineHeight:2.1,color:'var(--text1)'}}>
+            <div dir="rtl" style={{fontFamily:"'Frank Ruhl Libre',serif",fontSize,lineHeight:2,color:'var(--text1)'}}>
               {verses.map(v=>(
-                <span key={v.key} id={`rv-${v.key}`} style={{position:'relative'}}>
-                  {stopKey===v.key&&<span className="rv-stop-chip" style={{verticalAlign:'middle',marginLeft:'.2rem'}}>📍</span>}
-                  <sup style={{fontSize:'0.48em',color:'var(--text3)',marginLeft:'0.25em',cursor:'pointer',userSelect:'none'}}
-                    onClick={()=>togglePin(v.key)}>{v.verse}</sup>
-                  <span dangerouslySetInnerHTML={{__html:v.he}}/>{' '}
-                </span>
+                <div key={v.key} id={`rv-${v.key}`} style={{display:'flex',gap:'.4rem',alignItems:'baseline'}}>
+                  <sup style={{fontSize:'0.48em',color:'var(--text3)',flexShrink:0,cursor:'pointer',userSelect:'none',minWidth:'1.2rem'}}
+                    onClick={()=>togglePin(v.key)}>
+                    {stopKey===v.key&&'📍'}{toHebNum(v.verse)}
+                  </sup>
+                  <span dangerouslySetInnerHTML={{__html:v.he}}/>
+                </div>
               ))}
             </div>
           )}
