@@ -1127,13 +1127,14 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
                 const isStop=stopKey===v.key;
                 return (
                   <div key={v.key} id={`rv-${v.key}`} className={`rv-cont-verse${isStop?' is-stop':''}`}>
-                    <span className="rv-cont-pin"
-                      style={{fontSize:fontSize*0.52,color:isStop?'#d97706':'var(--text3)'}}
-                      onClick={()=>togglePin(v.key)}
-                      title="סמן/הסר עצירה">
-                      {isStop?'📍':toHebNum(v.verse)}
+                    <span className="rv-cont-pin" style={{fontSize:fontSize*0.55,color:'var(--text3)'}}>
+                      {toHebNum(v.verse)}
                     </span>
-                    <span dangerouslySetInnerHTML={{__html:v.he}}/>
+                    <span style={{flex:1}} dangerouslySetInnerHTML={{__html:v.he}}/>
+                    <button className={`rv-pin${isStop?' on':''}`} onClick={()=>togglePin(v.key)} title="סמן עצירה"
+                      style={{flexShrink:0,alignSelf:'center',fontSize:fontSize*0.7}}>
+                      📍
+                    </button>
                   </div>
                 );
               })}

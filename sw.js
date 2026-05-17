@@ -1,4 +1,4 @@
-const CACHE = 'shmot-v11';
+const CACHE = 'shmot-v12';
 const STATIC = ['./manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {
