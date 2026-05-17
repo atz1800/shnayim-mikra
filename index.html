@@ -346,8 +346,50 @@ a{color:inherit;text-decoration:none;}
 .vchip:hover{background:#fef3c7;color:#d97706;transform:scale(1.1);}
 .vchip.sel{background:linear-gradient(135deg,#f6d365,#fda085);color:#3a1800;box-shadow:0 3px 10px rgba(253,160,133,0.5);transform:scale(1.12);}
 
-/* ── Loading ──────────────────────────────── */
-.loading{min-height:100dvh;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:.95rem;background:var(--bg);}
+/* ── Splash screen ────────────────────────── */
+.splash{
+  min-height:100dvh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1.5rem;
+  background:linear-gradient(160deg,#eef2ff 0%,#f2f3f8 60%,#fff7ed 100%);
+}
+.splash-logo{
+  width:108px;height:108px;
+  background:linear-gradient(135deg,#1a56db,#0ea5e9);
+  border-radius:28px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 12px 40px rgba(26,86,219,0.35),0 3px 10px rgba(26,86,219,0.2);
+  animation:splash-pulse 2s ease-in-out infinite;
+}
+.splash-heb{
+  font-family:'Frank Ruhl Libre',serif;
+  font-size:2.8rem;font-weight:900;
+  color:#fff;
+  letter-spacing:-1px;
+  line-height:1;
+}
+.splash-title{
+  font-family:'Frank Ruhl Libre',serif;
+  font-size:1.3rem;font-weight:700;
+  color:var(--text1);
+  text-align:center;line-height:1.4;
+}
+.splash-dots{display:flex;gap:.45rem;align-items:center;}
+.splash-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:linear-gradient(135deg,#1a56db,#0ea5e9);
+  opacity:0.25;
+  animation:splash-dot 1.4s ease-in-out infinite;
+}
+.splash-dot:nth-child(2){animation-delay:.18s;}
+.splash-dot:nth-child(3){animation-delay:.36s;}
+@keyframes splash-pulse{
+  0%,100%{box-shadow:0 12px 40px rgba(26,86,219,0.35),0 3px 10px rgba(26,86,219,0.2);}
+  50%{box-shadow:0 16px 56px rgba(26,86,219,0.55),0 4px 14px rgba(26,86,219,0.3);}
+}
+@keyframes splash-dot{
+  0%,80%,100%{opacity:0.22;transform:scale(0.85);}
+  40%{opacity:1;transform:scale(1.2);}
+}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.1);border-radius:2px;}
 @media(max-width:400px){
@@ -740,7 +782,19 @@ function App() {
   function toggleAliya(parasha,num,field){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};n[parasha][num][field]=!n[parasha][num][field];persist(n);return n;});}
   function bulkMark(parasha,field,value){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(field===null){n[parasha]={};}else{for(let i=1;i<=7;i++){if(!n[parasha][i])n[parasha][i]={};n[parasha][i][field]=value;}}persist(n);return n;});}
   function updateStop(parasha,num,val){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};if(val)n[parasha][num].stop=val;else delete n[parasha][num].stop;persist(n);return n;});}
-  if(loading)return <div className="loading"><motion.div animate={{opacity:[0.4,1,0.4]}} transition={{duration:1.5,repeat:Infinity}}>טוען…</motion.div></div>;
+  if(loading)return(
+    <div className="splash">
+      <motion.div className="splash-logo" initial={{scale:0.7,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:'spring',stiffness:320,damping:24}}>
+        <span className="splash-heb">שמ</span>
+      </motion.div>
+      <motion.div className="splash-title" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.18,duration:0.4}}>
+        שניים מקרא ואחד תרגום
+      </motion.div>
+      <motion.div className="splash-dots" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.35}}>
+        <div className="splash-dot"/><div className="splash-dot"/><div className="splash-dot"/>
+      </motion.div>
+    </div>
+  );
 
   if(!user) return (
     <div className="signin-bg">
