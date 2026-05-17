@@ -402,6 +402,109 @@ a{color:inherit;text-decoration:none;}
   .sc-card:last-child:nth-child(odd){gap:1.2rem;padding:1rem 1.2rem;}
 }
 
+/* ── Reading View ─────────────────────────── */
+.rv-overlay{
+  position:fixed;inset:0;z-index:300;background:#fff;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.rv-header{
+  flex-shrink:0;
+  background:rgba(255,255,255,0.97);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  padding:.65rem 1rem;
+  display:flex;align-items:center;gap:.5rem;
+  border-block-end:1px solid rgba(0,0,0,0.07);
+  box-shadow:0 2px 12px rgba(0,0,0,0.04);
+}
+.rv-back{
+  background:var(--sl);border:none;border-radius:999px;
+  padding:.3rem .8rem;font-size:.8rem;font-weight:700;color:var(--sc);
+  cursor:pointer;flex-shrink:0;box-shadow:0 2px 8px var(--sglow);
+}
+.rv-head-title{font-family:'Frank Ruhl Libre',serif;font-size:1.12rem;font-weight:900;flex:1;color:var(--text1);}
+.rv-ascroll{
+  border:none;border-radius:999px;padding:.28rem .7rem;
+  font-size:.62rem;font-weight:700;cursor:pointer;white-space:nowrap;
+  background:rgba(0,0,0,0.07);color:var(--text2);transition:all .2s;
+}
+.rv-ascroll.on{background:linear-gradient(135deg,#059669,#34d399);color:#fff;box-shadow:0 3px 10px rgba(5,150,105,0.4);}
+.rv-ctrl{
+  flex-shrink:0;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;
+  padding:.45rem 1rem;
+  background:rgba(242,243,248,0.9);
+  border-block-end:1px solid rgba(0,0,0,0.06);
+}
+.rv-mode{
+  border:none;border-radius:999px;padding:.28rem .72rem;
+  font-size:.67rem;font-weight:700;cursor:pointer;transition:all .15s;
+}
+.rv-mode.on{background:var(--sc);color:#fff;box-shadow:0 2px 8px var(--sglow);}
+.rv-mode:not(.on){background:rgba(0,0,0,0.06);color:var(--text2);}
+.rv-fbtn{
+  background:rgba(0,0,0,0.07);border:none;border-radius:50%;
+  width:27px;height:27px;cursor:pointer;
+  font-size:.9rem;font-weight:700;display:flex;align-items:center;
+  justify-content:center;color:var(--text2);
+}
+.rv-flbl{font-size:.6rem;color:var(--text3);min-width:1.6rem;text-align:center;}
+.rv-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.rv-inner{max-width:680px;margin:0 auto;padding:.6rem 1.2rem 6rem;}
+.rv-verse{
+  padding:.65rem 0;border-block-end:1px solid rgba(0,0,0,0.05);position:relative;
+}
+.rv-verse:last-child{border-block-end:none;}
+.rv-verse.is-stop{
+  background:linear-gradient(155deg,rgba(246,211,101,0.1),rgba(253,160,133,0.07));
+  margin-inline:-.5rem;padding-inline:.5rem;border-radius:var(--r-sm);
+  border-block-end:none;margin-block-end:.5rem;
+}
+.rv-vnum{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:.6rem;color:var(--text3);font-weight:700;margin-block-end:.3rem;
+}
+.rv-stop-chip{
+  background:linear-gradient(135deg,rgba(246,211,101,0.22),rgba(253,160,133,0.18));
+  color:#8a5010;padding:.07rem .42rem;border-radius:999px;
+  border:1px solid rgba(246,180,50,0.38);font-size:.58rem;margin-inline-end:.3rem;
+}
+.rv-pin{
+  background:none;border:none;cursor:pointer;
+  font-size:.78rem;color:var(--text3);padding:.05rem .3rem;
+  border-radius:4px;transition:all .12s;
+}
+.rv-pin:hover{color:#d97706;background:rgba(253,160,133,0.1);}
+.rv-pin.on{color:#d97706;}
+.rv-he{
+  font-family:'Frank Ruhl Libre',serif;line-height:2;
+  color:var(--text1);direction:rtl;
+}
+.rv-tg{
+  font-family:'Frank Ruhl Libre',serif;line-height:1.85;
+  color:var(--text2);direction:rtl;
+  margin-block-start:.4rem;padding-block-start:.38rem;
+  border-block-start:1px dashed rgba(0,0,0,0.09);
+}
+.rv-loading{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:50dvh;gap:1rem;color:var(--text2);font-size:.9rem;
+}
+.rv-error{text-align:center;padding:3rem 1rem;color:#dc2626;font-size:.9rem;}
+.rv-retry{
+  margin-top:1rem;padding:.4rem 1rem;border-radius:999px;border:none;
+  background:var(--sc);color:#fff;cursor:pointer;font-weight:700;font-size:.82rem;
+}
+.rv-credit{text-align:center;font-size:.58rem;color:var(--text3);padding:1.5rem;}
+.rv-credit a{color:var(--sc);}
+.btn-read{
+  background:linear-gradient(135deg,#1a56db,#7c3aed);
+  color:#fff;border:none;border-radius:999px;
+  padding:.25rem .65rem;font-size:.6rem;font-weight:700;
+  cursor:pointer;box-shadow:0 3px 10px rgba(26,86,219,0.3);
+  transition:all .15s;white-space:nowrap;
+  display:flex;align-items:center;gap:.2rem;
+}
+
 /* ── Parshot view ─────────────────────── */
 .psv-header{
   display:flex;align-items:center;gap:.75rem;
@@ -458,6 +561,10 @@ const SEFARIA = {
 const sefText = n => { const s=SEFARIA[n]; return s?`https://www.sefaria.org.il/${s}?lang=he&aliyot=1`:null; };
 const sefTarg = n => { const s=SEFARIA[n]; return s?`https://www.sefaria.org.il/${s}?lang=he&aliyot=1&with=Targum%20Onkelos`:null; };
 
+const ONKELOS_BOOK = {
+  bereshit:'Genesis', shemot:'Exodus', vayikra:'Leviticus', bamidbar:'Numbers', devarim:'Deuteronomy'
+};
+
 /* ═══ RING COLORS ═════════════════════════ */
 const RING = {
   bereshit:{ c1:'#1a56db', c2:'#0ea5e9', glow:'rgba(26,86,219,0.5)'  },
@@ -493,6 +600,38 @@ function globalStats(prog){
     let all=true;for(let i=1;i<=7;i++){const a=(prog[n]||{})[i]||{};if(a.r1)r1++;if(a.r2)r2++;if(a.tg)tg++;if(!a.r1||!a.r2||!a.tg)all=false;}
     if(all)complete++;else missing++;
   }return{r1,r2,tg,complete,missing};
+}
+
+/* ═══ SEFARIA HELPERS ═══════════════════ */
+function buildVerseList(heData, tgData) {
+  const verses = [];
+  const heChaps = heData.he || [];
+  const startChap = (heData.sections && heData.sections[0]) || 1;
+  let tgChaps = [], tgStart = startChap;
+  if (tgData && Array.isArray(tgData.he)) {
+    tgChaps = tgData.he;
+    tgStart = (tgData.sections && tgData.sections[0]) || 1;
+  }
+  heChaps.forEach((chapArr, ci) => {
+    if (!Array.isArray(chapArr)) return;
+    const chapNum = startChap + ci;
+    const tgIdx = chapNum - tgStart;
+    const tgChap = (tgIdx >= 0 && tgChaps[tgIdx]) ? tgChaps[tgIdx] : [];
+    chapArr.forEach((heText, vi) => {
+      if (!heText) return;
+      verses.push({
+        chap: chapNum, verse: vi + 1, key: `${chapNum}:${vi + 1}`,
+        he: heText, tg: (Array.isArray(tgChap) ? tgChap[vi] : '') || ''
+      });
+    });
+  });
+  return verses;
+}
+function buildOnkelosRef(mainRef, seferId) {
+  const book = ONKELOS_BOOK[seferId];
+  if (!book || !mainRef) return null;
+  const noBook = mainRef.replace(book + ' ', '').replace(/:/g, '.').replace(/-/g,'-');
+  return `Onkelos_${book}.${noBook}`;
 }
 
 /* ═══ FIREBASE ═══════════════════════════ */
@@ -670,7 +809,7 @@ function AliyaRow({ name, num, label, a, onToggle, onStop }) {
 }
 
 /* ═══ BOTTOM SHEET ═══════════════════════ */
-function BottomSheet({ name, theme, prog, onClose, onToggle, onBulk, onStop }) {
+function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, onStop, onOpenRead }) {
   const aliyaData=prog[name]||{};
   const {done,total}=parshaStats(prog,name);
   const pct=Math.round(done/total*100);
@@ -686,8 +825,8 @@ function BottomSheet({ name, theme, prog, onClose, onToggle, onBulk, onStop }) {
             <span className="bs-prog-l">{done}/{total}</span>
           </div>
           <div className="bs-links">
-            {sefText(name)&&<a className="btn-link text" href={sefText(name)} target="_blank" rel="noopener">📖 טקסט</a>}
-            {sefTarg(name)&&<a className="btn-link targ" href={sefTarg(name)} target="_blank" rel="noopener">📜 תרגום</a>}
+            <motion.button className="btn-read" onClick={()=>onOpenRead(name,seferId,theme)} whileTap={{scale:0.93}}>📖 קרא</motion.button>
+            {sefText(name)&&<a className="btn-link text" href={sefText(name)} target="_blank" rel="noopener">טקסט</a>}
           </div>
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
@@ -753,8 +892,140 @@ function ParshotView({ sefer, prog, currentParasha, filterMissing, onOpen, onBac
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:'.6rem'}}>
         {visible.map(name=>(
           <ParshaCard key={name} name={name} theme={sefer.theme} prog={prog}
-            isCurrent={currentParasha===name} onOpen={()=>onOpen(name,sefer.theme)}/>
+            isCurrent={currentParasha===name} onOpen={()=>onOpen(name,sefer.theme,sefer.id)}/>
         ))}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ═══ VERSE BLOCK ════════════════════════ */
+function VerseBlock({ v, mode, fontSize, isStop, onPin }) {
+  return (
+    <div className={`rv-verse${isStop?' is-stop':''}`} id={`rv-${v.key}`}>
+      <div className="rv-vnum">
+        <span>
+          {isStop&&<span className="rv-stop-chip">עצרתי כאן</span>}
+          {v.chap}:{v.verse}
+        </span>
+        <button className={`rv-pin${isStop?' on':''}`} onClick={onPin} title="סמן עצירה">📍</button>
+      </div>
+      {mode==='paired' ? (
+        <>
+          <div className="rv-he" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
+          {v.tg&&<div className="rv-tg" style={{fontSize:fontSize*0.92}} dangerouslySetInnerHTML={{__html:v.tg}}/>}
+        </>
+      ) : (
+        <div className="rv-he" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
+      )}
+    </div>
+  );
+}
+
+/* ═══ READING VIEW ═══════════════════════ */
+function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
+  const [mode,setMode] = useState('paired');
+  const [fontSize,setFontSize] = useState(18);
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState(null);
+  const [verses,setVerses] = useState([]);
+  const [autoScroll,setAutoScroll] = useState(false);
+  const bodyRef = useRef(null);
+  const rafRef = useRef(null);
+  const stopKey = (prog[name]||{}).readingStop || null;
+
+  useEffect(()=>{document.body.style.overflow='hidden';return()=>{document.body.style.overflow='';};},[]);
+
+  useEffect(()=>{ load(); },[name]);
+
+  useEffect(()=>{
+    if(stopKey&&!loading){
+      const el=document.getElementById(`rv-${stopKey}`);
+      if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),350);
+    }
+  },[loading]);
+
+  useEffect(()=>{
+    cancelAnimationFrame(rafRef.current);
+    if(!autoScroll) return;
+    function step(){ bodyRef.current?.scrollBy({top:1}); rafRef.current=requestAnimationFrame(step); }
+    rafRef.current=requestAnimationFrame(step);
+    return()=>cancelAnimationFrame(rafRef.current);
+  },[autoScroll]);
+
+  async function load() {
+    setLoading(true); setError(null); setVerses([]);
+    try {
+      const ref=SEFARIA[name];
+      if(!ref) throw new Error('לא נמצא מיפוי לפרשה זו');
+      const heRes=await fetch(`https://www.sefaria.org/api/texts/${ref}?lang=he&aliyot=0`);
+      if(!heRes.ok) throw new Error('שגיאת רשת מספריא');
+      const heData=await heRes.json();
+      let tgData=null;
+      try {
+        const tgRef=buildOnkelosRef(heData.ref,seferId);
+        if(tgRef){
+          const tgRes=await fetch(`https://www.sefaria.org/api/texts/${tgRef}?lang=he`);
+          if(tgRes.ok) tgData=await tgRes.json();
+        }
+      } catch {}
+      const list=buildVerseList(heData,tgData);
+      if(!list.length) throw new Error('לא התקבל טקסט');
+      setVerses(list);
+    } catch(e) {
+      setError(e.message||'שגיאה בטעינה');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function togglePin(key){ onUpdateStop(name, stopKey===key?'':key); }
+
+  return (
+    <motion.div className={`rv-overlay ${theme}`}
+      initial={{x:'100%'}} animate={{x:0}} exit={{x:'100%'}}
+      transition={{type:'spring',stiffness:380,damping:36}}>
+      <div className="rv-header">
+        <motion.button className="rv-back" onClick={onClose} whileTap={{scale:0.93}}>‹ חזרה</motion.button>
+        <div className="rv-head-title">{name}</div>
+        <motion.button className={`rv-ascroll${autoScroll?' on':''}`}
+          onClick={()=>setAutoScroll(v=>!v)} whileTap={{scale:0.93}}>
+          {autoScroll?'⏸ עצור':'▶ גלילה'}
+        </motion.button>
+      </div>
+      <div className="rv-ctrl">
+        <motion.button className={`rv-mode${mode==='paired'?' on':''}`}
+          onClick={()=>setMode('paired')} whileTap={{scale:0.93}}>שניים ואחד</motion.button>
+        <motion.button className={`rv-mode${mode==='continuous'?' on':''}`}
+          onClick={()=>setMode('continuous')} whileTap={{scale:0.93}}>רצוף</motion.button>
+        <div style={{flex:1}}/>
+        <button className="rv-fbtn" onClick={()=>setFontSize(s=>Math.max(14,s-2))}>−</button>
+        <span className="rv-flbl">{fontSize}</span>
+        <button className="rv-fbtn" onClick={()=>setFontSize(s=>Math.min(28,s+2))}>+</button>
+      </div>
+      <div className="rv-body" ref={bodyRef}>
+        <div className="rv-inner">
+          {loading&&(
+            <div className="rv-loading">
+              <div className="splash-dots"><div className="splash-dot"/><div className="splash-dot"/><div className="splash-dot"/></div>
+              <div>טוען טקסט מספריא...</div>
+            </div>
+          )}
+          {error&&(
+            <div className="rv-error">
+              ⚠ {error}
+              <br/>
+              <button className="rv-retry" onClick={load}>נסה שוב</button>
+            </div>
+          )}
+          {!loading&&!error&&verses.map(v=>(
+            <VerseBlock key={v.key} v={v} mode={mode} fontSize={fontSize}
+              isStop={stopKey===v.key} onPin={()=>togglePin(v.key)}/>
+          ))}
+          {!loading&&!error&&verses.length>0&&(
+            <div className="rv-credit">מקור הטקסט: <a href="https://www.sefaria.org" target="_blank" rel="noopener">ספריא</a> · CC BY-NC</div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -768,6 +1039,7 @@ function App() {
   const [sheet,setSheet]=useState(null);
   const [selectedSefer,setSelectedSefer]=useState(null);
   const [filterMissing,setFilterMissing]=useState(false);
+  const [readingView,setReadingView]=useState(null);
   const saveTimer=useRef(null);
   const curYear=useRef(getHebrewYear()).current;
   const curParasha=useRef(detectParasha()).current;
@@ -794,6 +1066,8 @@ function App() {
   function toggleAliya(parasha,num,field){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};n[parasha][num][field]=!n[parasha][num][field];persist(n);return n;});}
   function bulkMark(parasha,field,value){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(field===null){n[parasha]={};}else{for(let i=1;i<=7;i++){if(!n[parasha][i])n[parasha][i]={};n[parasha][i][field]=value;}}persist(n);return n;});}
   function updateStop(parasha,num,val){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};if(val)n[parasha][num].stop=val;else delete n[parasha][num].stop;persist(n);return n;});}
+  function updateReadingStop(parasha,key){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(key)n[parasha].readingStop=key;else delete n[parasha].readingStop;persist(n);return n;});}
+  function openReadingView(name,seferId,theme){setSheet(null);setReadingView({name,seferId,theme});}
   if(loading)return(
     <div className="splash">
       <motion.div className="splash-logo" initial={{scale:0.7,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:'spring',stiffness:320,damping:24}}>
@@ -865,7 +1139,7 @@ function App() {
         ) : (
           <ParshotView key={selectedSefer.id} sefer={selectedSefer} prog={prog}
             currentParasha={curParasha} filterMissing={filterMissing}
-            onOpen={(name,theme)=>setSheet({name,theme})}
+            onOpen={(name,theme,seferId)=>setSheet({name,theme,seferId})}
             onBack={()=>setSelectedSefer(null)}
           />
         )}
@@ -873,8 +1147,15 @@ function App() {
 
       <AnimatePresence>
         {sheet&&(
-          <BottomSheet key="sheet" name={sheet.name} theme={sheet.theme} prog={prog}
-            onClose={()=>setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop}/>
+          <BottomSheet key="sheet" name={sheet.name} seferId={sheet.seferId} theme={sheet.theme} prog={prog}
+            onClose={()=>setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop}
+            onOpenRead={openReadingView}/>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {readingView&&(
+          <ReadingView key="rv" name={readingView.name} seferId={readingView.seferId} theme={readingView.theme}
+            prog={prog} onClose={()=>setReadingView(null)} onUpdateStop={updateReadingStop}/>
         )}
       </AnimatePresence>
     </>
