@@ -504,6 +504,30 @@ a{color:inherit;text-decoration:none;}
   transition:all .15s;white-space:nowrap;
   display:flex;align-items:center;gap:.2rem;
 }
+.btn-read-big{
+  display:flex;align-items:center;justify-content:center;gap:.45rem;
+  width:100%;padding:.85rem 1rem;border-radius:var(--r-md);border:none;
+  background:linear-gradient(135deg,#1a56db,#7c3aed);
+  color:#fff;font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;font-weight:700;
+  cursor:pointer;box-shadow:0 6px 24px rgba(26,86,219,0.38);
+  transition:filter .15s;letter-spacing:.01em;
+}
+.btn-read-big:hover{filter:brightness(1.08);}
+.btn-read-big:active{filter:brightness(0.96);}
+.rv-read-label{
+  font-size:.58rem;font-weight:800;color:var(--text3);
+  margin-block-start:.4rem;display:block;
+}
+.rv-read-label.b{color:var(--sc);opacity:.7;}
+.rv-read-label.tg{color:var(--gold);}
+.rv-he-second{opacity:.78;}
+.rv-speed-wrap{display:flex;align-items:center;gap:.25rem;}
+.rv-speed-btn{
+  border:none;border-radius:999px;padding:.22rem .52rem;
+  font-size:.6rem;font-weight:700;cursor:pointer;
+  background:rgba(0,0,0,0.06);color:var(--text2);transition:all .15s;
+}
+.rv-speed-btn.on{background:var(--sc);color:#fff;}
 
 /* ── Parshot view ─────────────────────── */
 .psv-header{
@@ -825,8 +849,7 @@ function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, on
             <span className="bs-prog-l">{done}/{total}</span>
           </div>
           <div className="bs-links">
-            <motion.button className="btn-read" onClick={()=>onOpenRead(name,seferId,theme)} whileTap={{scale:0.93}}>📖 קרא</motion.button>
-            {sefText(name)&&<a className="btn-link text" href={sefText(name)} target="_blank" rel="noopener">טקסט</a>}
+            {sefText(name)&&<a className="btn-link text" href={sefText(name)} target="_blank" rel="noopener">ספריא ↗</a>}
           </div>
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
@@ -835,6 +858,11 @@ function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, on
           <motion.button className="bulk-btn b2" whileTap={{scale:0.93}} onClick={()=>onBulk(name,'r2',true)}>✓ כל 2</motion.button>
           <motion.button className="bulk-btn bt" whileTap={{scale:0.93}} onClick={()=>onBulk(name,'tg',true)}>✓ כל תרגום</motion.button>
           <motion.button className="bulk-btn bx" whileTap={{scale:0.93}} onClick={()=>onBulk(name,null,false)}>× נקה</motion.button>
+        </div>
+        <div style={{padding:'.7rem 1.1rem .2rem'}}>
+          <motion.button className="btn-read-big" onClick={()=>onOpenRead(name,seferId,theme)} whileTap={{scale:0.97}}>
+            📖 קרא שניים מקרא ואחד תרגום
+          </motion.button>
         </div>
         <div className="bs-body">
           {ALIYA_LABELS.map((label,idx)=>{
@@ -910,13 +938,19 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin }) {
         </span>
         <button className={`rv-pin${isStop?' on':''}`} onClick={onPin} title="סמן עצירה">📍</button>
       </div>
-      {mode==='paired' ? (
+      {mode==='shnayim' ? (
+        <>
+          <span className="rv-read-label">א׳</span>
+          <div className="rv-he" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
+          <span className="rv-read-label b">ב׳</span>
+          <div className="rv-he rv-he-second" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
+          {v.tg&&<><span className="rv-read-label tg">תרג׳</span><div className="rv-tg" style={{fontSize:fontSize*0.92}} dangerouslySetInnerHTML={{__html:v.tg}}/></>}
+        </>
+      ) : (
         <>
           <div className="rv-he" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
           {v.tg&&<div className="rv-tg" style={{fontSize:fontSize*0.92}} dangerouslySetInnerHTML={{__html:v.tg}}/>}
         </>
-      ) : (
-        <div className="rv-he" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
       )}
     </div>
   );
@@ -924,14 +958,15 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin }) {
 
 /* ═══ READING VIEW ═══════════════════════ */
 function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
-  const [mode,setMode] = useState('paired');
+  const [mode,setMode] = useState('shnayim');
   const [fontSize,setFontSize] = useState(18);
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState(null);
   const [verses,setVerses] = useState([]);
   const [autoScroll,setAutoScroll] = useState(false);
+  const [scrollSpeed,setScrollSpeed] = useState('slow');
   const bodyRef = useRef(null);
-  const rafRef = useRef(null);
+  const timerRef = useRef(null);
   const stopKey = (prog[name]||{}).readingStop || null;
 
   useEffect(()=>{document.body.style.overflow='hidden';return()=>{document.body.style.overflow='';};},[]);
@@ -946,12 +981,12 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
   },[loading]);
 
   useEffect(()=>{
-    cancelAnimationFrame(rafRef.current);
+    clearInterval(timerRef.current);
     if(!autoScroll) return;
-    function step(){ bodyRef.current?.scrollBy({top:1}); rafRef.current=requestAnimationFrame(step); }
-    rafRef.current=requestAnimationFrame(step);
-    return()=>cancelAnimationFrame(rafRef.current);
-  },[autoScroll]);
+    const ms = {slow:80, medium:35, fast:15}[scrollSpeed];
+    timerRef.current = setInterval(()=>bodyRef.current?.scrollBy({top:1}), ms);
+    return()=>clearInterval(timerRef.current);
+  },[autoScroll, scrollSpeed]);
 
   async function load() {
     setLoading(true); setError(null); setVerses([]);
@@ -994,8 +1029,10 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
         </motion.button>
       </div>
       <div className="rv-ctrl">
+        <motion.button className={`rv-mode${mode==='shnayim'?' on':''}`}
+          onClick={()=>setMode('shnayim')} whileTap={{scale:0.93}}>שניים ואחד</motion.button>
         <motion.button className={`rv-mode${mode==='paired'?' on':''}`}
-          onClick={()=>setMode('paired')} whileTap={{scale:0.93}}>שניים ואחד</motion.button>
+          onClick={()=>setMode('paired')} whileTap={{scale:0.93}}>פסוק ותרגום</motion.button>
         <motion.button className={`rv-mode${mode==='continuous'?' on':''}`}
           onClick={()=>setMode('continuous')} whileTap={{scale:0.93}}>רצוף</motion.button>
         <div style={{flex:1}}/>
@@ -1003,6 +1040,17 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
         <span className="rv-flbl">{fontSize}</span>
         <button className="rv-fbtn" onClick={()=>setFontSize(s=>Math.min(28,s+2))}>+</button>
       </div>
+      {autoScroll&&(
+        <div style={{display:'flex',alignItems:'center',gap:'.3rem',padding:'.3rem 1rem',background:'rgba(242,243,248,0.7)',borderBottom:'1px solid rgba(0,0,0,0.04)',flexShrink:0}}>
+          <span style={{fontSize:'.6rem',color:'var(--text3)',fontWeight:700}}>מהירות:</span>
+          {['slow','medium','fast'].map(s=>(
+            <button key={s} className={`rv-speed-btn${scrollSpeed===s?' on':''}`}
+              onClick={()=>setScrollSpeed(s)}>
+              {s==='slow'?'🐢':s==='medium'?'🚶':'🏃'}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="rv-body" ref={bodyRef}>
         <div className="rv-inner">
           {loading&&(
@@ -1018,10 +1066,22 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
               <button className="rv-retry" onClick={load}>נסה שוב</button>
             </div>
           )}
-          {!loading&&!error&&verses.map(v=>(
+          {!loading&&!error&&mode!=='continuous'&&verses.map(v=>(
             <VerseBlock key={v.key} v={v} mode={mode} fontSize={fontSize}
               isStop={stopKey===v.key} onPin={()=>togglePin(v.key)}/>
           ))}
+          {!loading&&!error&&mode==='continuous'&&verses.length>0&&(
+            <div dir="rtl" style={{fontFamily:"'Frank Ruhl Libre',serif",fontSize,lineHeight:2.1,color:'var(--text1)'}}>
+              {verses.map(v=>(
+                <span key={v.key} id={`rv-${v.key}`} style={{position:'relative'}}>
+                  {stopKey===v.key&&<span className="rv-stop-chip" style={{verticalAlign:'middle',marginLeft:'.2rem'}}>📍</span>}
+                  <sup style={{fontSize:'0.48em',color:'var(--text3)',marginLeft:'0.25em',cursor:'pointer',userSelect:'none'}}
+                    onClick={()=>togglePin(v.key)}>{v.verse}</sup>
+                  <span dangerouslySetInnerHTML={{__html:v.he}}/>{' '}
+                </span>
+              ))}
+            </div>
+          )}
           {!loading&&!error&&verses.length>0&&(
             <div className="rv-credit">מקור הטקסט: <a href="https://www.sefaria.org" target="_blank" rel="noopener">ספריא</a> · CC BY-NC</div>
           )}
