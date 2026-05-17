@@ -496,6 +496,37 @@ a{color:inherit;text-decoration:none;}
 }
 .rv-credit{text-align:center;font-size:.58rem;color:var(--text3);padding:1.5rem;}
 .rv-credit a{color:var(--sc);}
+.rv-bm-btn{
+  background:rgba(246,211,101,0.18);border:1.5px solid rgba(246,180,50,0.45);
+  border-radius:999px;padding:.28rem .72rem;
+  font-size:.62rem;font-weight:700;cursor:pointer;color:#8a5010;
+  white-space:nowrap;transition:all .15s;
+}
+.rv-bm-btn:hover{background:rgba(246,211,101,0.32);}
+.rv-cont-verse{display:flex;gap:.5rem;align-items:flex-start;border-radius:8px;transition:background .2s;}
+.rv-cont-verse.is-stop{
+  background:rgba(246,211,101,0.16);
+  border-inline-end:3px solid rgba(246,180,50,0.65);
+  margin-inline:-.4rem;padding-inline:.4rem .3rem;
+  padding-block:.15rem;
+}
+.rv-cont-pin{
+  flex-shrink:0;min-width:1.8rem;cursor:pointer;user-select:none;
+  padding-top:.18rem;text-align:center;font-weight:700;transition:color .12s;
+}
+.btn-resume{
+  display:flex;align-items:center;justify-content:center;gap:.35rem;
+  width:100%;padding:.55rem .8rem;margin-top:.4rem;
+  background:rgba(246,211,101,0.13);
+  border:1.5px solid rgba(246,180,50,0.38);border-radius:var(--r-md);
+  font-size:.78rem;font-weight:700;cursor:pointer;color:#8a5010;
+  transition:background .15s;
+}
+.btn-resume:hover{background:rgba(246,211,101,0.24);}
+.p-bookmark{
+  position:absolute;inset-block-start:.32rem;inset-inline-start:.32rem;
+  font-size:.68rem;line-height:1;
+}
 .btn-read{
   background:linear-gradient(135deg,#1a56db,#7c3aed);
   color:#fff;border:none;border-radius:999px;
@@ -744,6 +775,7 @@ function ParshaCard({ name, theme, prog, isCurrent, onOpen }) {
       transition={{type:'spring',stiffness:400,damping:28}}
     >
       {isCurrent&&<div className="now-chip">השבוע</div>}
+      {(prog[name]||{}).readingStop&&<div className="p-bookmark">🔖</div>}
       <div className="p-name">{name}</div>
       <div className="p-dots">
         {[1,2,3,4,5,6,7].map(i=>{
@@ -863,6 +895,16 @@ function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, on
           <motion.button className="btn-read-big" onClick={()=>onOpenRead(name,seferId,theme)} whileTap={{scale:0.97}}>
             📖 קרא שניים מקרא ואחד תרגום
           </motion.button>
+          {(()=>{
+            const sk=(prog[name]||{}).readingStop;
+            if(!sk) return null;
+            const [c,v]=sk.split(':').map(Number);
+            return (
+              <motion.button className="btn-resume" onClick={()=>onOpenRead(name,seferId,theme)} whileTap={{scale:0.97}}>
+                🔖 המשך מפרק {toHebNum(c)}, פסוק {toHebNum(v)}
+              </motion.button>
+            );
+          })()}
         </div>
         <div className="bs-body">
           {ALIYA_LABELS.map((label,idx)=>{
@@ -1015,6 +1057,10 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
   }
 
   function togglePin(key){ onUpdateStop(name, stopKey===key?'':key); }
+  function jumpToStop(){
+    const el=document.getElementById(`rv-${stopKey}`);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  }
 
   return (
     <motion.div className={`rv-overlay ${theme}`}
@@ -1023,9 +1069,14 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
       <div className="rv-header">
         <motion.button className="rv-back" onClick={onClose} whileTap={{scale:0.93}}>‹ חזרה</motion.button>
         <div className="rv-head-title">{name}</div>
+        {stopKey&&(
+          <motion.button className="rv-bm-btn" onClick={jumpToStop} whileTap={{scale:0.93}} title="קפוץ לנקודת עצירה">
+            🔖 קפוץ
+          </motion.button>
+        )}
         <motion.button className={`rv-ascroll${autoScroll?' on':''}`}
           onClick={()=>setAutoScroll(v=>!v)} whileTap={{scale:0.93}}>
-          {autoScroll?'⏸ עצור':'▶ גלילה'}
+          {autoScroll?'⏸':'▶'}
         </motion.button>
       </div>
       <div className="rv-ctrl">
@@ -1072,15 +1123,20 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
           ))}
           {!loading&&!error&&mode==='continuous'&&verses.length>0&&(
             <div dir="rtl" style={{fontFamily:"'Frank Ruhl Libre',serif",fontSize,lineHeight:2,color:'var(--text1)'}}>
-              {verses.map(v=>(
-                <div key={v.key} id={`rv-${v.key}`} style={{display:'flex',gap:'.4rem',alignItems:'baseline'}}>
-                  <sup style={{fontSize:'0.48em',color:'var(--text3)',flexShrink:0,cursor:'pointer',userSelect:'none',minWidth:'1.2rem'}}
-                    onClick={()=>togglePin(v.key)}>
-                    {stopKey===v.key&&'📍'}{toHebNum(v.verse)}
-                  </sup>
-                  <span dangerouslySetInnerHTML={{__html:v.he}}/>
-                </div>
-              ))}
+              {verses.map(v=>{
+                const isStop=stopKey===v.key;
+                return (
+                  <div key={v.key} id={`rv-${v.key}`} className={`rv-cont-verse${isStop?' is-stop':''}`}>
+                    <span className="rv-cont-pin"
+                      style={{fontSize:fontSize*0.52,color:isStop?'#d97706':'var(--text3)'}}
+                      onClick={()=>togglePin(v.key)}
+                      title="סמן/הסר עצירה">
+                      {isStop?'📍':toHebNum(v.verse)}
+                    </span>
+                    <span dangerouslySetInnerHTML={{__html:v.he}}/>
+                  </div>
+                );
+              })}
             </div>
           )}
           {!loading&&!error&&verses.length>0&&(
