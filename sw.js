@@ -1,5 +1,5 @@
-const CACHE = 'shmot-v12';
-const STATIC = ['./manifest.json', './icon.svg'];
+const CACHE = 'shmot-v13';
+const STATIC = ['./manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)));
