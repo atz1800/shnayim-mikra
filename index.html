@@ -592,12 +592,17 @@ a{color:inherit;text-decoration:none;}
 .rv-read-label.rs{color:#7c3aed;}
 .rv-he-second{opacity:.78;}
 .rv-rs{
-  font-family:'Frank Ruhl Libre',serif;line-height:1.9;
-  color:var(--text2);font-size:.92em;
-  padding:.45rem .75rem;margin-block-start:.2rem;
+  font-family:'Frank Ruhl Libre',serif;line-height:2;
+  color:var(--text2);
+  padding:.7rem 1rem;
   background:rgba(124,58,237,0.05);
-  border-radius:8px;
-  border-inline-end:3px solid rgba(124,58,237,0.3);
+  border-radius:10px;
+  border-inline-end:3px solid rgba(124,58,237,0.35);
+}
+.rv-verse.mode-rashi{padding:1.2rem 0;}
+.rv-rashi-loading{
+  text-align:center;padding:2rem;
+  font-size:.85rem;color:var(--text3);
 }
 .rv-speed-wrap{display:flex;align-items:center;gap:.25rem;}
 .rv-speed-btn{
@@ -1111,8 +1116,8 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin }) {
         </>
       ) : mode==='rashi' ? (
         <>
-          <div className="rv-he" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
-          {v.rs&&<><span className="rv-read-label rs">רש״י</span><div className="rv-rs" style={{fontSize:fontSize*0.88}} dangerouslySetInnerHTML={{__html:v.rs}}/></>}
+          <div className="rv-he" style={{fontSize,marginBottom:v.rs?'.6rem':0}} dangerouslySetInnerHTML={{__html:v.he}}/>
+          {v.rs&&<div className="rv-rs" style={{fontSize:fontSize*0.88}} dangerouslySetInnerHTML={{__html:v.rs}}/>}
         </>
       ) : (
         <>
@@ -1131,6 +1136,8 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState(null);
   const [verses,setVerses] = useState([]);
+  const [rashiLoading,setRashiLoading] = useState(false);
+  const rashiLoadedRef = useRef(false);
   const [autoScroll,setAutoScroll] = useState(false);
   const [scrollSpeed,setScrollSpeed] = useState('slow');
   const bodyRef = useRef(null);
@@ -1140,7 +1147,35 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
 
   useEffect(()=>{document.body.style.overflow='hidden';return()=>{document.body.style.overflow='';};},[]);
 
-  useEffect(()=>{ load(); },[name]);
+  useEffect(()=>{ rashiLoadedRef.current=false; load(); },[name]);
+
+  // lazy-load Rashi only when switching to rashi mode
+  useEffect(()=>{
+    if(mode!=='rashi'||rashiLoadedRef.current||loading||!verses.length) return;
+    rashiLoadedRef.current=true;
+    setRashiLoading(true);
+    (async()=>{
+      try{
+        // get ref from first verse to reconstruct the range
+        const heRef=verses[0].chap===verses[verses.length-1].chap
+          ?`${ONKELOS_BOOK[seferId]} ${verses[0].chap}:${verses[0].verse}-${verses[verses.length-1].verse}`
+          :`${ONKELOS_BOOK[seferId]} ${verses[0].chap}:${verses[0].verse}-${verses[verses.length-1].chap}:${verses[verses.length-1].verse}`;
+        const rsRef=buildRashiRef(heRef,seferId);
+        if(!rsRef){setRashiLoading(false);return;}
+        const res=await fetch(`https://www.sefaria.org/api/texts/${rsRef}?lang=he`);
+        if(!res.ok){setRashiLoading(false);return;}
+        const rsData=await res.json();
+        const rsChaps=normalizeChaps(rsData.he||[]);
+        const rsStart=(rsData.sections&&rsData.sections[0])||verses[0].chap;
+        setVerses(prev=>prev.map(v=>{
+          const rsChap=rsChaps[v.chap-rsStart]||[];
+          const raw=Array.isArray(rsChap)?rsChap[v.verse-1]:'';
+          const rs=Array.isArray(raw)?raw.join(' '):(raw||'');
+          return{...v,rs};
+        }));
+      }catch{}finally{setRashiLoading(false);}
+    })();
+  },[mode]);
 
   useEffect(()=>{
     if(stopKey&&!loading&&!skipStop){
@@ -1192,18 +1227,12 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
       const heRes=await fetch(`https://www.sefaria.org/api/texts/${ref}?lang=he&aliyot=0`);
       if(!heRes.ok) throw new Error('שגיאת רשת מספריא');
       const heData=await heRes.json();
-      let tgData=null, rsData=null;
+      let tgData=null;
       try {
         const tgRef=buildOnkelosRef(heData.ref,seferId);
-        const rsRef=buildRashiRef(heData.ref,seferId);
-        const [tgRes,rsRes]=await Promise.all([
-          tgRef?fetch(`https://www.sefaria.org/api/texts/${tgRef}?lang=he`):Promise.resolve(null),
-          rsRef?fetch(`https://www.sefaria.org/api/texts/${rsRef}?lang=he`):Promise.resolve(null),
-        ]);
-        if(tgRes?.ok) tgData=await tgRes.json();
-        if(rsRes?.ok) rsData=await rsRes.json();
+        if(tgRef){const r=await fetch(`https://www.sefaria.org/api/texts/${tgRef}?lang=he`);if(r.ok)tgData=await r.json();}
       } catch {}
-      const list=buildVerseList(heData,tgData,rsData);
+      const list=buildVerseList(heData,tgData,null);
       if(!list.length) throw new Error('לא התקבל טקסט');
       setVerses(list);
     } catch(e) {
@@ -1291,6 +1320,9 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
               <br/>
               <button className="rv-retry" onClick={load}>נסה שוב</button>
             </div>
+          )}
+          {!loading&&!error&&mode==='rashi'&&rashiLoading&&(
+            <div className="rv-rashi-loading">טוען פירוש רש״י…</div>
           )}
           {!loading&&!error&&mode!=='continuous'&&verses.map(v=>(
             <VerseBlock key={v.key} v={v} mode={mode} fontSize={fontSize}
