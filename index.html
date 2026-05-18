@@ -357,51 +357,56 @@ a{color:inherit;text-decoration:none;}
 .vchip.sel{background:linear-gradient(135deg,#f6d365,#fda085);color:#3a1800;box-shadow:0 3px 10px rgba(253,160,133,0.5);transform:scale(1.12);}
 
 /* ── Splash screen ────────────────────────── */
+@keyframes sp-fadein{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sp-scalein{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+@keyframes sp-fadeonly{from{opacity:0}to{opacity:1}}
 #html-splash{
   position:fixed;inset:0;z-index:999;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:linear-gradient(160deg,#eef2ff 0%,#f5f0ff 60%,#fff1f0 100%);
+  padding:0 1.5rem;transition:opacity .5s ease;
 }
+#html-splash.sp-out{opacity:0;pointer-events:none;}
 #html-splash .sp-logo-pre{
-  font-family:'Frank Ruhl Libre',serif;font-size:5.5rem;font-weight:900;line-height:1;
-  background:linear-gradient(135deg,#1a56db,#7c3aed,#dc2626);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.splash-bg{
-  position:fixed;inset:0;z-index:999;overflow:hidden;
-  background:linear-gradient(160deg,#eef2ff 0%,#f5f0ff 60%,#fff1f0 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:0 1.5rem;
-}
-.sp-logo{
   font-family:'Frank Ruhl Libre',serif;font-size:5.5rem;font-weight:900;line-height:1;
   background:linear-gradient(135deg,#1a56db,#7c3aed,#dc2626);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   margin-bottom:.5rem;
 }
-.sp-subtitle{
-  font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;font-weight:400;
-  color:var(--text2);letter-spacing:.04em;margin-bottom:2.5rem;
+#html-splash .sp-subtitle{
+  font-family:'Frank Ruhl Libre',serif;font-size:1rem;font-weight:400;
+  color:var(--text2);letter-spacing:.05em;margin-bottom:2.2rem;
+  opacity:0;animation:sp-fadein .6s ease forwards;animation-delay:.75s;
 }
-.sp-divider{
-  width:80px;height:2px;margin-bottom:2.2rem;
+#html-splash .sp-divider{
+  width:80px;height:2px;margin-bottom:2rem;
   background:linear-gradient(90deg,transparent,#7c3aed,transparent);
   border-radius:2px;
+  opacity:0;animation:sp-scalein .8s ease forwards;animation-delay:1.15s;
 }
-.sp-quote-card{
+#html-splash .sp-quote-card{
   background:#fff;border-radius:var(--r-xl);
-  padding:1.6rem 1.8rem;
-  box-shadow:0 8px 40px rgba(100,110,200,0.1),0 2px 8px rgba(0,0,0,0.04);
+  padding:1.8rem 2rem;
+  box-shadow:0 8px 40px rgba(100,110,200,0.12),0 2px 8px rgba(0,0,0,0.04);
   text-align:center;direction:rtl;max-width:320px;width:100%;
+  opacity:0;animation:sp-fadein .9s ease forwards;animation-delay:1.6s;
 }
-.sp-quote{
-  font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;
-  color:var(--text1);line-height:2.2;
+#html-splash .sp-deco{
+  font-size:2.8rem;line-height:1;color:#e5e7eb;
+  font-family:Georgia,serif;display:block;margin-bottom:.3rem;
 }
-.sp-paren{color:var(--text3);}
-.sp-source{
-  margin-top:1rem;font-size:.75rem;font-weight:600;
-  color:#7c3aed;letter-spacing:.05em;
+#html-splash .sp-quote{
+  font-family:'Frank Ruhl Libre',serif;font-size:.98rem;font-style:italic;
+  color:#374151;line-height:2.1;
+}
+#html-splash .sp-quote strong{
+  font-style:normal;font-weight:700;color:#1f2937;
+}
+#html-splash .sp-paren{color:#9ca3af;font-style:normal;font-size:.88rem;}
+#html-splash .sp-source{
+  margin-top:1.1rem;font-size:.72rem;font-weight:700;
+  color:#7c3aed;letter-spacing:.06em;font-style:normal;
+  opacity:0;animation:sp-fadeonly .6s ease forwards;animation-delay:2.8s;
 }
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.1);border-radius:2px;}
@@ -644,6 +649,20 @@ a{color:inherit;text-decoration:none;}
 <body>
 <div id="html-splash">
   <div class="sp-logo-pre">שמו״ת</div>
+  <div class="sp-subtitle">שניים מקרא ואחד תרגום</div>
+  <div class="sp-divider"></div>
+  <div class="sp-quote-card">
+    <span class="sp-deco">❝</span>
+    <div class="sp-quote">
+      אמר רב הונא בר יהודה אמר רבי אמי<br>
+      לעולם ישלים אדם פרשיותיו עם הצבור<br>
+      <strong>שנים מקרא ואחד תרגום</strong><br>
+      <span class="sp-paren">אפילו עטרות ודיבון</span><br>
+      שכל המשלים פרשיותיו עם הצבור<br>
+      מאריכין לו ימיו ושנותיו
+    </div>
+    <div class="sp-source">מסכת ברכות, ח׳ ע״א–ע״ב</div>
+  </div>
 </div>
 <div id="root"></div>
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(()=>{});</script>
@@ -1367,48 +1386,9 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
 }
 
 /* ═══ APP ════════════════════════════════ */
-function SplashScreen(){
-  return(
-    <div className="splash-bg">
-      <div className="sp-logo">שמו״ת</div>
-      <motion.div className="sp-subtitle"
-        initial={{opacity:0,y:8}}
-        animate={{opacity:1,y:0}}
-        transition={{duration:0.6,delay:0.75,ease:[0.16,1,0.3,1]}}>
-        שניים מקרא ואחד תרגום
-      </motion.div>
-      <motion.div className="sp-divider"
-        initial={{scaleX:0,opacity:0}}
-        animate={{scaleX:1,opacity:1}}
-        transition={{duration:0.8,delay:1.15,ease:[0.16,1,0.3,1]}}>
-      </motion.div>
-      <motion.div className="sp-quote-card"
-        initial={{opacity:0,y:18}}
-        animate={{opacity:1,y:0}}
-        transition={{duration:0.9,delay:1.6,ease:[0.16,1,0.3,1]}}>
-        <div className="sp-quote">
-          אמר רב הונא בר יהודה אמר רבי אמי<br/>
-          לעולם ישלים אדם פרשיותיו עם הצבור<br/>
-          <strong>שנים מקרא ואחד תרגום</strong><br/>
-          <span className="sp-paren">אפילו עטרות ודיבון</span><br/>
-          שכל המשלים פרשיותיו עם הצבור<br/>
-          מאריכין לו ימיו ושנותיו
-        </div>
-        <motion.div className="sp-source"
-          initial={{opacity:0}}
-          animate={{opacity:1}}
-          transition={{duration:0.6,delay:2.7}}>
-          מסכת ברכות, ח׳ ע״א–ע״ב
-        </motion.div>
-      </motion.div>
-    </div>
-  );
-}
-
 function App() {
   const [user,setUser]=useState(null);
   const [loading,setLoading]=useState(true);
-  const [splashVisible,setSplashVisible]=useState(true);
   const [prog,setProg]=useState({});
   const [sheet,setSheet]=useState(null);
   const [selectedSefer,setSelectedSefer]=useState(null);
@@ -1419,10 +1399,13 @@ function App() {
   const curParasha=useRef(detectParasha()).current;
   const {missing}=globalStats(prog);
 
-  useEffect(()=>{ document.getElementById('html-splash')?.remove(); },[]);
-
   useEffect(()=>{
-    const t=setTimeout(()=>setSplashVisible(false),5000);
+    const el=document.getElementById('html-splash');
+    if(!el) return;
+    const t=setTimeout(()=>{
+      el.classList.add('sp-out');
+      setTimeout(()=>el.remove(),520);
+    },5000);
     return ()=>clearTimeout(t);
   },[]);
 
@@ -1447,7 +1430,7 @@ function App() {
   function updateStop(parasha,num,val){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};if(val)n[parasha][num].stop=val;else delete n[parasha][num].stop;persist(n);return n;});}
   function updateReadingStop(parasha,key){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(key)n[parasha].readingStop=key;else delete n[parasha].readingStop;persist(n);return n;});}
   function openReadingView(name,seferId,theme,skipStop=false){setSheet(null);setReadingView({name,seferId,theme,skipStop});}
-  if(loading||splashVisible)return <SplashScreen/>;
+  if(loading) return null;
 
   if(!user) return (
     <div className="signin-bg">
