@@ -1334,7 +1334,12 @@ function App() {
                 </motion.div>
               )}
             </AnimatePresence>
-            {curParasha&&<ResumeCard parasha={curParasha} prog={prog} onOpen={openReadingView}/>}
+            {(()=>{
+              const resumeP=(curParasha&&(prog[curParasha]||{}).readingStop)
+                ?curParasha
+                :Object.keys(prog).find(p=>prog[p]&&prog[p].readingStop);
+              return resumeP?<ResumeCard parasha={resumeP} prog={prog} onOpen={openReadingView}/>:null;
+            })()}
             <div className="sefer-grid">
               {SFARIM.map((sefer,i)=>(
                 <SeferCard key={sefer.id} sefer={sefer} prog={prog}
