@@ -352,61 +352,48 @@ a{color:inherit;text-decoration:none;}
 #html-splash{
   position:fixed;inset:0;z-index:999;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at 50% 38%,#0d1b40 0%,#060d24 55%,#020812 100%);
+  background:linear-gradient(160deg,#eef2ff 0%,#f5f0ff 60%,#fff1f0 100%);
 }
-#html-splash .sp-logo{
-  font-family:'Frank Ruhl Libre',serif;font-size:4.5rem;font-weight:900;line-height:1;
-  background:linear-gradient(135deg,#f6d365,#feda75,#fda085);
+#html-splash .sp-logo-pre{
+  font-family:'Frank Ruhl Libre',serif;font-size:5.5rem;font-weight:900;line-height:1;
+  background:linear-gradient(135deg,#1a56db,#7c3aed,#dc2626);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 .splash-bg{
   position:fixed;inset:0;z-index:999;overflow:hidden;
-  background:radial-gradient(ellipse at 50% 38%,#0d1b40 0%,#060d24 55%,#020812 100%);
+  background:linear-gradient(160deg,#eef2ff 0%,#f5f0ff 60%,#fff1f0 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-}
-.sp-stars{position:absolute;inset:0;pointer-events:none;}
-.sp-star{
-  position:absolute;border-radius:50%;background:#fff;
-  animation:sp-twinkle var(--dur,3s) ease-in-out infinite var(--dly,0s);
-}
-@keyframes sp-twinkle{
-  0%,100%{opacity:var(--op-min,0.08);}
-  50%{opacity:var(--op-max,0.6);}
-}
-.sp-ring{
-  position:absolute;border-radius:50%;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  border:1px solid rgba(246,211,101,var(--ra,0.18));
-  animation:sp-ring-pulse var(--rpd,3.5s) ease-in-out infinite var(--rdy,0s);
-}
-@keyframes sp-ring-pulse{
-  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:var(--ra,0.18);}
-  50%{transform:translate(-50%,-50%) scale(1.05);opacity:calc(var(--ra,0.18)*2.2);}
+  padding:0 1.5rem;
 }
 .sp-logo{
-  font-family:'Frank Ruhl Libre',serif;font-size:4.8rem;font-weight:900;line-height:1;
-  background:linear-gradient(145deg,#f6d365 0%,#feda75 45%,#fda085 100%);
+  font-family:'Frank Ruhl Libre',serif;font-size:5.5rem;font-weight:900;line-height:1;
+  background:linear-gradient(135deg,#1a56db,#7c3aed,#dc2626);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 28px rgba(246,211,101,0.45));
-  margin-bottom:.35rem;
+  margin-bottom:.5rem;
 }
 .sp-subtitle{
-  font-family:'Frank Ruhl Libre',serif;font-size:1rem;font-weight:400;
-  color:rgba(255,255,255,0.6);letter-spacing:.06em;margin-bottom:2.2rem;
+  font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;font-weight:400;
+  color:var(--text2);letter-spacing:.04em;margin-bottom:2.5rem;
 }
 .sp-divider{
-  width:72px;height:1.5px;margin-bottom:2rem;
-  background:linear-gradient(90deg,transparent,#f6d365,transparent);
+  width:80px;height:2px;margin-bottom:2.2rem;
+  background:linear-gradient(90deg,transparent,#7c3aed,transparent);
+  border-radius:2px;
+}
+.sp-quote-card{
+  background:#fff;border-radius:var(--r-xl);
+  padding:1.6rem 1.8rem;
+  box-shadow:0 8px 40px rgba(100,110,200,0.1),0 2px 8px rgba(0,0,0,0.04);
+  text-align:center;direction:rtl;max-width:320px;width:100%;
 }
 .sp-quote{
-  font-family:'Frank Ruhl Libre',serif;font-size:.92rem;
-  color:rgba(255,255,255,0.82);text-align:center;line-height:2.1;
-  max-width:290px;direction:rtl;
+  font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;
+  color:var(--text1);line-height:2.2;
 }
-.sp-paren{color:rgba(255,255,255,0.38);}
+.sp-paren{color:var(--text3);}
 .sp-source{
-  margin-top:1.3rem;font-size:.7rem;font-weight:400;
-  color:#f6d365;opacity:.75;letter-spacing:.07em;
+  margin-top:1rem;font-size:.75rem;font-weight:600;
+  color:#7c3aed;letter-spacing:.05em;
 }
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.1);border-radius:2px;}
@@ -629,7 +616,7 @@ a{color:inherit;text-decoration:none;}
 </head>
 <body>
 <div id="html-splash">
-  <div class="sp-logo">שמו״ת</div>
+  <div class="sp-logo-pre">שמו״ת</div>
 </div>
 <div id="root"></div>
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(()=>{});</script>
@@ -1216,73 +1203,42 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
 }
 
 /* ═══ APP ════════════════════════════════ */
-const STARS = Array.from({length:55},(_,i)=>({
-  id:i, top:(i*37+13)%100, left:(i*61+7)%100,
-  size:((i*17)%18)/10+0.8,
-  dur:((i*23)%25)/10+2.2,
-  dly:((i*31)%30)/10,
-  opMin:((i*11)%8)/100+0.04,
-  opMax:((i*19)%45)/100+0.25,
-}));
-
 function SplashScreen(){
-  const rings=[
-    {size:118,ra:0.55,rpd:2.6,rdy:0},
-    {size:200,ra:0.32,rpd:3.1,rdy:0.5},
-    {size:308,ra:0.16,rpd:3.8,rdy:1.0},
-    {size:430,ra:0.08,rpd:4.6,rdy:1.6},
-  ];
   return(
     <div className="splash-bg">
-      <div className="sp-stars">
-        {STARS.map(s=>(
-          <div key={s.id} className="sp-star" style={{
-            top:`${s.top}%`,left:`${s.left}%`,
-            width:s.size,height:s.size,
-            '--dur':`${s.dur}s`,'--dly':`${s.dly}s`,
-            '--op-min':s.opMin,'--op-max':s.opMax,
-          }}/>
-        ))}
-      </div>
-      {rings.map((r,i)=>(
-        <div key={i} className="sp-ring" style={{
-          width:r.size,height:r.size,
-          '--ra':r.ra,'--rpd':`${r.rpd}s`,'--rdy':`${r.rdy}s`,
-        }}/>
-      ))}
-      <motion.div style={{display:'flex',flexDirection:'column',alignItems:'center',position:'relative',zIndex:2,padding:'0 1.8rem',textAlign:'center'}}>
-        <motion.div className="sp-logo"
-          initial={{scale:0.45,opacity:0}}
-          animate={{scale:1,opacity:1}}
-          transition={{type:'spring',stiffness:240,damping:20,delay:0.25}}>
-          שמו״ת
-        </motion.div>
-        <motion.div className="sp-subtitle"
-          initial={{opacity:0,y:10}}
-          animate={{opacity:1,y:0}}
-          transition={{duration:0.7,delay:0.85,ease:[0.16,1,0.3,1]}}>
-          שניים מקרא ואחד תרגום
-        </motion.div>
-        <motion.div className="sp-divider"
-          initial={{scaleX:0,opacity:0}}
-          animate={{scaleX:1,opacity:1}}
-          transition={{duration:0.9,delay:1.3,ease:[0.16,1,0.3,1]}}>
-        </motion.div>
-        <motion.div className="sp-quote"
-          initial={{opacity:0,y:14}}
-          animate={{opacity:1,y:0}}
-          transition={{duration:1,delay:1.75,ease:[0.16,1,0.3,1]}}>
+      <motion.div className="sp-logo"
+        initial={{scale:0.55,opacity:0}}
+        animate={{scale:1,opacity:1}}
+        transition={{type:'spring',stiffness:260,damping:22,delay:0.2}}>
+        שמו״ת
+      </motion.div>
+      <motion.div className="sp-subtitle"
+        initial={{opacity:0,y:8}}
+        animate={{opacity:1,y:0}}
+        transition={{duration:0.6,delay:0.75,ease:[0.16,1,0.3,1]}}>
+        שניים מקרא ואחד תרגום
+      </motion.div>
+      <motion.div className="sp-divider"
+        initial={{scaleX:0,opacity:0}}
+        animate={{scaleX:1,opacity:1}}
+        transition={{duration:0.8,delay:1.15,ease:[0.16,1,0.3,1]}}>
+      </motion.div>
+      <motion.div className="sp-quote-card"
+        initial={{opacity:0,y:18}}
+        animate={{opacity:1,y:0}}
+        transition={{duration:0.9,delay:1.6,ease:[0.16,1,0.3,1]}}>
+        <div className="sp-quote">
           אמר רב הונא בר יהודה אמר רבי אמי<br/>
           לעולם ישלים אדם פרשיותיו עם הצבור<br/>
           <strong>שנים מקרא ואחד תרגום</strong><br/>
           <span className="sp-paren">אפילו עטרות ודיבון</span><br/>
           שכל המשלים פרשיותיו עם הצבור<br/>
           מאריכין לו ימיו ושנותיו
-        </motion.div>
+        </div>
         <motion.div className="sp-source"
           initial={{opacity:0}}
           animate={{opacity:1}}
-          transition={{duration:0.8,delay:2.9}}>
+          transition={{duration:0.6,delay:2.7}}>
           מסכת ברכות, ח׳ ע״א–ע״ב
         </motion.div>
       </motion.div>
@@ -1293,6 +1249,7 @@ function SplashScreen(){
 function App() {
   const [user,setUser]=useState(null);
   const [loading,setLoading]=useState(true);
+  const [splashVisible,setSplashVisible]=useState(true);
   const [prog,setProg]=useState({});
   const [sheet,setSheet]=useState(null);
   const [selectedSefer,setSelectedSefer]=useState(null);
@@ -1304,6 +1261,11 @@ function App() {
   const {missing}=globalStats(prog);
 
   useEffect(()=>{ document.getElementById('html-splash')?.remove(); },[]);
+
+  useEffect(()=>{
+    const t=setTimeout(()=>setSplashVisible(false),6500);
+    return ()=>clearTimeout(t);
+  },[]);
 
   useEffect(()=>{
     const {auth,onAuthStateChanged,getRedirectResult}=window._fb;
@@ -1326,7 +1288,7 @@ function App() {
   function updateStop(parasha,num,val){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};if(val)n[parasha][num].stop=val;else delete n[parasha][num].stop;persist(n);return n;});}
   function updateReadingStop(parasha,key){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(key)n[parasha].readingStop=key;else delete n[parasha].readingStop;persist(n);return n;});}
   function openReadingView(name,seferId,theme){setSheet(null);setReadingView({name,seferId,theme});}
-  if(loading)return <SplashScreen/>;
+  if(loading||splashVisible)return <SplashScreen/>;
 
   if(!user) return (
     <div className="signin-bg">
