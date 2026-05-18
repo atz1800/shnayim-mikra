@@ -404,36 +404,41 @@ a{color:inherit;text-decoration:none;}
   .sc-card:last-child:nth-child(odd){gap:1.2rem;padding:1rem 1.2rem;}
 }
 
-/* ── Resume Card ─────────────────────────── */
+/* ── Quick action cards ───────────────────── */
+.quick-row{display:flex;gap:10px;margin-block-end:1rem;}
+.week-card,.resume-card{
+  flex:1;display:flex;align-items:center;gap:.7rem;
+  border-radius:var(--r-lg);padding:.9rem 1rem;
+  cursor:pointer;position:relative;overflow:hidden;
+}
+.week-card{
+  background:#fff;
+  border:2px solid var(--sc);
+  box-shadow:0 4px 18px var(--sglow);
+}
 .resume-card{
-  display:flex;align-items:center;gap:.85rem;
   background:var(--sg);
-  border-radius:var(--r-lg);
-  padding:1rem 1.25rem;
-  margin-block-end:1rem;
-  cursor:pointer;
-  box-shadow:0 8px 28px var(--sglow);
+  box-shadow:0 6px 22px var(--sglow);
   color:#fff;
-  position:relative;overflow:hidden;
 }
 .resume-card::before{
   content:'';position:absolute;inset:0;
-  background:rgba(255,255,255,0.08);
-  border-radius:inherit;
+  background:rgba(255,255,255,0.08);border-radius:inherit;
 }
-.resume-icon{font-size:1.65rem;flex-shrink:0;line-height:1;}
-.resume-info{flex:1;min-width:0;}
-.resume-label{font-size:.65rem;font-weight:600;opacity:.85;margin-block-end:.1rem;}
-.resume-pos{
-  font-family:'Frank Ruhl Libre',serif;
-  font-size:1.15rem;font-weight:900;line-height:1.2;
-  text-shadow:0 1px 4px rgba(0,0,0,0.15);
+.qc-icon{font-size:1.35rem;flex-shrink:0;line-height:1;}
+.qc-info{flex:1;min-width:0;}
+.qc-label{font-size:.58rem;font-weight:700;margin-block-end:.1rem;letter-spacing:.03em;}
+.week-card .qc-label{color:var(--sc);}
+.resume-card .qc-label{opacity:.85;}
+.qc-main{
+  font-family:'Frank Ruhl Libre',serif;font-size:1rem;font-weight:900;line-height:1.25;
 }
-.resume-parasha{font-size:.72rem;font-weight:600;opacity:.88;margin-block-start:.15rem;}
-.resume-arrow{
-  font-size:1.5rem;opacity:.85;flex-shrink:0;
-  font-weight:300;
-}
+.week-card .qc-main{color:#111827;}
+.resume-card .qc-main{text-shadow:0 1px 3px rgba(0,0,0,0.15);}
+.qc-sub{font-size:.65rem;font-weight:600;margin-block-start:.12rem;}
+.week-card .qc-sub{color:var(--sc);opacity:.75;}
+.resume-card .qc-sub{opacity:.82;}
+.qc-arrow{font-size:1.3rem;opacity:.7;flex-shrink:0;}
 
 /* ── Reading View ─────────────────────────── */
 .rv-overlay{
@@ -689,11 +694,14 @@ function globalStats(prog){
 /* ═══ SEFARIA HELPERS ═══════════════════ */
 function buildVerseList(heData, tgData) {
   const verses = [];
-  const heChaps = heData.he || [];
+  const raw = heData.he || [];
   const startChap = (heData.sections && heData.sections[0]) || 1;
+  // handle both flat ["v1","v2",...] and nested [["v1",...],[...]] formats
+  const heChaps = (raw.length > 0 && !Array.isArray(raw[0])) ? [raw] : raw;
   let tgChaps = [], tgStart = startChap;
   if (tgData && Array.isArray(tgData.he)) {
-    tgChaps = tgData.he;
+    const tgRaw = tgData.he;
+    tgChaps = (tgRaw.length > 0 && !Array.isArray(tgRaw[0])) ? [tgRaw] : tgRaw;
     tgStart = (tgData.sections && tgData.sections[0]) || 1;
   }
   heChaps.forEach((chapArr, ci) => {
@@ -768,6 +776,24 @@ function BigRing({ sefer, pct, size=90 }) {
 }
 
 /* ═══ RESUME CARD ═══════════════════════ */
+function WeekCard({ parasha, onOpen }) {
+  const sefer = SFARIM.find(s => s.parshiot.includes(parasha));
+  if (!sefer) return null;
+  return (
+    <motion.div className={`week-card ${sefer.theme}`}
+      onClick={()=>onOpen(parasha, sefer.id, sefer.theme, true)}
+      whileTap={{scale:0.97}}
+      initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}}
+      transition={{type:'spring',stiffness:360,damping:30}}>
+      <div className="qc-icon">📅</div>
+      <div className="qc-info">
+        <div className="qc-label">פרשת השבוע</div>
+        <div className="qc-main">{parasha}</div>
+      </div>
+      <div className="qc-arrow">‹</div>
+    </motion.div>
+  );
+}
 function ResumeCard({ parasha, prog, onOpen }) {
   const sk = (prog[parasha]||{}).readingStop;
   if (!sk) return null;
@@ -778,15 +804,15 @@ function ResumeCard({ parasha, prog, onOpen }) {
     <motion.div className={`resume-card ${sefer.theme}`}
       onClick={()=>onOpen(parasha, sefer.id, sefer.theme)}
       whileTap={{scale:0.97}}
-      initial={{opacity:0,y:-14}} animate={{opacity:1,y:0}}
+      initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}}
       transition={{type:'spring',stiffness:360,damping:30}}>
-      <div className="resume-icon">📖</div>
-      <div className="resume-info">
-        <div className="resume-label">ממשיכים לקרוא</div>
-        <div className="resume-pos">פרק {toHebNum(c)}, פסוק {toHebNum(v)}</div>
-        <div className="resume-parasha">פרשת {parasha}</div>
+      <div className="qc-icon">🔖</div>
+      <div className="qc-info">
+        <div className="qc-label">ממשיכים מ...</div>
+        <div className="qc-main">פרק {toHebNum(c)}, פסוק {toHebNum(v)}</div>
+        <div className="qc-sub">פרשת {parasha}</div>
       </div>
-      <div className="resume-arrow">‹</div>
+      <div className="qc-arrow">‹</div>
     </motion.div>
   );
 }
@@ -1052,7 +1078,7 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin }) {
 }
 
 /* ═══ READING VIEW ═══════════════════════ */
-function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
+function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipStop }) {
   const [mode,setMode] = useState('shnayim');
   const [fontSize,setFontSize] = useState(18);
   const [loading,setLoading] = useState(true);
@@ -1069,7 +1095,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
   useEffect(()=>{ load(); },[name]);
 
   useEffect(()=>{
-    if(stopKey&&!loading){
+    if(stopKey&&!loading&&!skipStop){
       const el=document.getElementById(`rv-${stopKey}`);
       if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),350);
     }
@@ -1206,12 +1232,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop }) {
 function SplashScreen(){
   return(
     <div className="splash-bg">
-      <motion.div className="sp-logo"
-        initial={{scale:0.55,opacity:0}}
-        animate={{scale:1,opacity:1}}
-        transition={{type:'spring',stiffness:260,damping:22,delay:0.2}}>
-        שמו״ת
-      </motion.div>
+      <div className="sp-logo">שמו״ת</div>
       <motion.div className="sp-subtitle"
         initial={{opacity:0,y:8}}
         animate={{opacity:1,y:0}}
@@ -1263,7 +1284,7 @@ function App() {
   useEffect(()=>{ document.getElementById('html-splash')?.remove(); },[]);
 
   useEffect(()=>{
-    const t=setTimeout(()=>setSplashVisible(false),6500);
+    const t=setTimeout(()=>setSplashVisible(false),5000);
     return ()=>clearTimeout(t);
   },[]);
 
@@ -1287,7 +1308,7 @@ function App() {
   function bulkMark(parasha,field,value){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(field===null){n[parasha]={};}else{for(let i=1;i<=7;i++){if(!n[parasha][i])n[parasha][i]={};n[parasha][i][field]=value;}}persist(n);return n;});}
   function updateStop(parasha,num,val){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(!n[parasha][num])n[parasha][num]={};if(val)n[parasha][num].stop=val;else delete n[parasha][num].stop;persist(n);return n;});}
   function updateReadingStop(parasha,key){setProg(prev=>{const n=JSON.parse(JSON.stringify(prev));if(!n[parasha])n[parasha]={};if(key)n[parasha].readingStop=key;else delete n[parasha].readingStop;persist(n);return n;});}
-  function openReadingView(name,seferId,theme){setSheet(null);setReadingView({name,seferId,theme});}
+  function openReadingView(name,seferId,theme,skipStop=false){setSheet(null);setReadingView({name,seferId,theme,skipStop});}
   if(loading||splashVisible)return <SplashScreen/>;
 
   if(!user) return (
@@ -1338,7 +1359,14 @@ function App() {
               const resumeP=(curParasha&&(prog[curParasha]||{}).readingStop)
                 ?curParasha
                 :Object.keys(prog).find(p=>prog[p]&&prog[p].readingStop);
-              return resumeP?<ResumeCard parasha={resumeP} prog={prog} onOpen={openReadingView}/>:null;
+              const showRow=curParasha||resumeP;
+              if(!showRow) return null;
+              return(
+                <div className="quick-row">
+                  {curParasha&&<WeekCard parasha={curParasha} onOpen={openReadingView}/>}
+                  {resumeP&&<ResumeCard parasha={resumeP} prog={prog} onOpen={openReadingView}/>}
+                </div>
+              );
             })()}
             <div className="sefer-grid">
               {SFARIM.map((sefer,i)=>(
@@ -1369,7 +1397,7 @@ function App() {
       <AnimatePresence>
         {readingView&&(
           <ReadingView key="rv" name={readingView.name} seferId={readingView.seferId} theme={readingView.theme}
-            prog={prog} onClose={()=>setReadingView(null)} onUpdateStop={updateReadingStop}/>
+            prog={prog} onClose={()=>setReadingView(null)} onUpdateStop={updateReadingStop} skipStop={readingView.skipStop}/>
         )}
       </AnimatePresence>
     </>
