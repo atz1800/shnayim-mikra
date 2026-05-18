@@ -589,7 +589,16 @@ a{color:inherit;text-decoration:none;}
 }
 .rv-read-label.b{color:var(--sc);opacity:.7;}
 .rv-read-label.tg{color:var(--gold);}
+.rv-read-label.rs{color:#7c3aed;}
 .rv-he-second{opacity:.78;}
+.rv-rs{
+  font-family:'Frank Ruhl Libre',serif;line-height:1.9;
+  color:var(--text2);font-size:.92em;
+  padding:.45rem .75rem;margin-block-start:.2rem;
+  background:rgba(124,58,237,0.05);
+  border-radius:8px;
+  border-inline-end:3px solid rgba(124,58,237,0.3);
+}
 .rv-speed-wrap{display:flex;align-items:center;gap:.25rem;}
 .rv-speed-btn{
   border:none;border-radius:999px;padding:.22rem .52rem;
@@ -653,6 +662,9 @@ const sefTarg = n => { const s=SEFARIA[n]; return s?`https://www.sefaria.org.il/
 const ONKELOS_BOOK = {
   bereshit:'Genesis', shemot:'Exodus', vayikra:'Leviticus', bamidbar:'Numbers', devarim:'Deuteronomy'
 };
+const RASHI_BOOK = {
+  bereshit:'Genesis', shemot:'Exodus', vayikra:'Leviticus', bamidbar:'Numbers', devarim:'Deuteronomy'
+};
 
 /* ═══ RING COLORS ═════════════════════════ */
 const RING = {
@@ -713,28 +725,31 @@ function globalStats(prog){
 }
 
 /* ═══ SEFARIA HELPERS ═══════════════════ */
-function buildVerseList(heData, tgData) {
+function normalizeChaps(raw) {
+  if (!Array.isArray(raw) || !raw.length) return [];
+  return (!Array.isArray(raw[0])) ? [raw] : raw;
+}
+function buildVerseList(heData, tgData, rsData) {
   const verses = [];
-  const raw = heData.he || [];
   const startChap = (heData.sections && heData.sections[0]) || 1;
-  // handle both flat ["v1","v2",...] and nested [["v1",...],[...]] formats
-  const heChaps = (raw.length > 0 && !Array.isArray(raw[0])) ? [raw] : raw;
-  let tgChaps = [], tgStart = startChap;
-  if (tgData && Array.isArray(tgData.he)) {
-    const tgRaw = tgData.he;
-    tgChaps = (tgRaw.length > 0 && !Array.isArray(tgRaw[0])) ? [tgRaw] : tgRaw;
-    tgStart = (tgData.sections && tgData.sections[0]) || 1;
-  }
+  const heChaps = normalizeChaps(heData.he || []);
+  const tgChaps = tgData ? normalizeChaps(tgData.he || []) : [];
+  const tgStart = tgData ? ((tgData.sections && tgData.sections[0]) || 1) : startChap;
+  const rsChaps = rsData ? normalizeChaps(rsData.he || []) : [];
+  const rsStart = rsData ? ((rsData.sections && rsData.sections[0]) || 1) : startChap;
   heChaps.forEach((chapArr, ci) => {
     if (!Array.isArray(chapArr)) return;
     const chapNum = startChap + ci;
-    const tgIdx = chapNum - tgStart;
-    const tgChap = (tgIdx >= 0 && tgChaps[tgIdx]) ? tgChaps[tgIdx] : [];
+    const tgChap = tgChaps[chapNum - tgStart] || [];
+    const rsChap = rsChaps[chapNum - rsStart] || [];
     chapArr.forEach((heText, vi) => {
       if (!heText) return;
+      const rs = Array.isArray(rsChap) ? (rsChap[vi] || '') : '';
       verses.push({
         chap: chapNum, verse: vi + 1, key: `${chapNum}:${vi + 1}`,
-        he: heText, tg: (Array.isArray(tgChap) ? tgChap[vi] : '') || ''
+        he: heText,
+        tg: (Array.isArray(tgChap) ? tgChap[vi] : '') || '',
+        rs: Array.isArray(rs) ? rs.join(' ') : rs,
       });
     });
   });
@@ -745,6 +760,12 @@ function buildOnkelosRef(mainRef, seferId) {
   if (!book || !mainRef) return null;
   const noBook = mainRef.replace(book + ' ', '').replace(/:/g, '.').replace(/-/g,'-');
   return `Onkelos_${book}.${noBook}`;
+}
+function buildRashiRef(mainRef, seferId) {
+  const book = RASHI_BOOK[seferId];
+  if (!book || !mainRef) return null;
+  const noBook = mainRef.replace(book + ' ', '').replace(/:/g, '.').replace(/-/g,'-');
+  return `Rashi_on_${book}.${noBook}`;
 }
 
 /* ═══ FIREBASE ═══════════════════════════ */
@@ -1088,6 +1109,11 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin }) {
           <div className="rv-he rv-he-second" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
           {v.tg&&<><span className="rv-read-label tg">תרג׳</span><div className="rv-tg" style={{fontSize:fontSize*0.92}} dangerouslySetInnerHTML={{__html:v.tg}}/></>}
         </>
+      ) : mode==='rashi' ? (
+        <>
+          <div className="rv-he" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
+          {v.rs&&<><span className="rv-read-label rs">רש״י</span><div className="rv-rs" style={{fontSize:fontSize*0.88}} dangerouslySetInnerHTML={{__html:v.rs}}/></>}
+        </>
       ) : (
         <>
           <div className="rv-he" style={{fontSize}} dangerouslySetInnerHTML={{__html:v.he}}/>
@@ -1166,15 +1192,18 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
       const heRes=await fetch(`https://www.sefaria.org/api/texts/${ref}?lang=he&aliyot=0`);
       if(!heRes.ok) throw new Error('שגיאת רשת מספריא');
       const heData=await heRes.json();
-      let tgData=null;
+      let tgData=null, rsData=null;
       try {
         const tgRef=buildOnkelosRef(heData.ref,seferId);
-        if(tgRef){
-          const tgRes=await fetch(`https://www.sefaria.org/api/texts/${tgRef}?lang=he`);
-          if(tgRes.ok) tgData=await tgRes.json();
-        }
+        const rsRef=buildRashiRef(heData.ref,seferId);
+        const [tgRes,rsRes]=await Promise.all([
+          tgRef?fetch(`https://www.sefaria.org/api/texts/${tgRef}?lang=he`):Promise.resolve(null),
+          rsRef?fetch(`https://www.sefaria.org/api/texts/${rsRef}?lang=he`):Promise.resolve(null),
+        ]);
+        if(tgRes?.ok) tgData=await tgRes.json();
+        if(rsRes?.ok) rsData=await rsRes.json();
       } catch {}
-      const list=buildVerseList(heData,tgData);
+      const list=buildVerseList(heData,tgData,rsData);
       if(!list.length) throw new Error('לא התקבל טקסט');
       setVerses(list);
     } catch(e) {
@@ -1230,6 +1259,8 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
           onClick={()=>setMode('paired')} whileTap={{scale:0.93}}>פסוק ותרגום</motion.button>
         <motion.button className={`rv-mode${mode==='continuous'?' on':''}`}
           onClick={()=>setMode('continuous')} whileTap={{scale:0.93}}>רצוף</motion.button>
+        <motion.button className={`rv-mode${mode==='rashi'?' on':''}`}
+          onClick={()=>setMode('rashi')} whileTap={{scale:0.93}}>רש״י</motion.button>
         <div style={{flex:1}}/>
         <button className="rv-fbtn" onClick={()=>setFontSize(s=>Math.max(14,s-2))}>−</button>
         <span className="rv-flbl">{fontSize}</span>
