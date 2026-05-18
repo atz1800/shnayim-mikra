@@ -1088,6 +1088,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
   const [scrollSpeed,setScrollSpeed] = useState('slow');
   const bodyRef = useRef(null);
   const timerRef = useRef(null);
+  const posRef = useRef(null);
   const stopKey = (prog[name]||{}).readingStop || null;
 
   useEffect(()=>{document.body.style.overflow='hidden';return()=>{document.body.style.overflow='';};},[]);
@@ -1099,7 +1100,34 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
       const el=document.getElementById(`rv-${stopKey}`);
       if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),350);
     }
+    // init posRef to first verse so even quick-close gets something
+    if(!loading&&verses.length) posRef.current=verses[0].key;
   },[loading]);
+
+  // track scroll position
+  useEffect(()=>{
+    const cont=bodyRef.current;
+    if(!cont||!verses.length) return;
+    function onScroll(){
+      const contTop=cont.getBoundingClientRect().top;
+      for(const v of verses){
+        const el=document.getElementById(`rv-${v.key}`);
+        if(!el) continue;
+        if(el.getBoundingClientRect().top-contTop>-40){posRef.current=v.key;break;}
+      }
+    }
+    cont.addEventListener('scroll',onScroll,{passive:true});
+    return()=>cont.removeEventListener('scroll',onScroll);
+  },[verses]);
+
+  // save position when app goes to background (Android back button etc.)
+  useEffect(()=>{
+    function onHide(){
+      if(document.hidden&&posRef.current) onUpdateStop(name,posRef.current);
+    }
+    document.addEventListener('visibilitychange',onHide);
+    return()=>document.removeEventListener('visibilitychange',onHide);
+  },[name,verses]);
 
   useEffect(()=>{
     clearInterval(timerRef.current);
