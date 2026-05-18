@@ -164,14 +164,15 @@ a{color:inherit;text-decoration:none;}
 .sc-card.selected::after{opacity:1;}
 .sc-card:last-child:nth-child(odd){grid-column:1/-1;flex-direction:row;justify-content:center;gap:2rem;min-height:120px;padding:1rem 2rem;}
 
-.sc-name{font-family:'Frank Ruhl Libre',serif;font-size:1.05rem;font-weight:900;color:var(--text1);text-align:center;line-height:1.2;}
+.sc-name{font-family:'Frank Ruhl Libre',serif;font-size:1.18rem;font-weight:900;color:#111827;text-align:center;line-height:1.2;}
 .sc-card:last-child:nth-child(odd) .sc-name{font-size:1.25rem;}
 
 .sc-sub{font-size:.62rem;color:var(--text3);text-align:center;}
 .sc-pct-label{
-  font-family:'Frank Ruhl Libre',serif;font-size:.8rem;font-weight:700;
+  font-family:'Frank Ruhl Libre',serif;font-size:.88rem;font-weight:900;
   color:var(--sc);background:var(--sl);
-  padding:.18rem .6rem;border-radius:999px;
+  padding:.2rem .7rem;border-radius:999px;
+  box-shadow:0 1px 4px var(--sglow);
 }
 .sc-card:last-child:nth-child(odd) .sc-info{display:flex;flex-direction:column;justify-content:center;gap:.4rem;}
 
@@ -403,6 +404,37 @@ a{color:inherit;text-decoration:none;}
   .sc-card:last-child:nth-child(odd){gap:1.2rem;padding:1rem 1.2rem;}
 }
 
+/* ── Resume Card ─────────────────────────── */
+.resume-card{
+  display:flex;align-items:center;gap:.85rem;
+  background:var(--sg);
+  border-radius:var(--r-lg);
+  padding:1rem 1.25rem;
+  margin-block-end:1rem;
+  cursor:pointer;
+  box-shadow:0 8px 28px var(--sglow);
+  color:#fff;
+  position:relative;overflow:hidden;
+}
+.resume-card::before{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,0.08);
+  border-radius:inherit;
+}
+.resume-icon{font-size:1.65rem;flex-shrink:0;line-height:1;}
+.resume-info{flex:1;min-width:0;}
+.resume-label{font-size:.65rem;font-weight:600;opacity:.85;margin-block-end:.1rem;}
+.resume-pos{
+  font-family:'Frank Ruhl Libre',serif;
+  font-size:1.15rem;font-weight:900;line-height:1.2;
+  text-shadow:0 1px 4px rgba(0,0,0,0.15);
+}
+.resume-parasha{font-size:.72rem;font-weight:600;opacity:.88;margin-block-start:.15rem;}
+.resume-arrow{
+  font-size:1.5rem;opacity:.85;flex-shrink:0;
+  font-weight:300;
+}
+
 /* ── Reading View ─────────────────────────── */
 .rv-overlay{
   position:fixed;inset:0;z-index:300;background:#fff;
@@ -450,9 +482,9 @@ a{color:inherit;text-decoration:none;}
 }
 .rv-flbl{font-size:.6rem;color:var(--text3);min-width:1.6rem;text-align:center;}
 .rv-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
-.rv-inner{max-width:680px;margin:0 auto;padding:.6rem 1.2rem 6rem;}
+.rv-inner{max-width:680px;margin:0 auto;padding:1rem 1.5rem 7rem;}
 .rv-verse{
-  padding:.65rem 0;border-block-end:1px solid rgba(0,0,0,0.05);position:relative;
+  padding:.9rem 0;border-block-end:1px solid rgba(0,0,0,0.05);position:relative;
 }
 .rv-verse:last-child{border-block-end:none;}
 .rv-verse.is-stop{
@@ -736,6 +768,30 @@ function BigRing({ sefer, pct, size=90 }) {
         <text x={cx} y={cy+7} textAnchor="middle" fontSize={size*0.26} fontWeight="900" fill="rgba(0,0,0,0.18)" fontFamily="Frank Ruhl Libre,serif">{sefer.letter}</text>
       )}
     </svg>
+  );
+}
+
+/* ═══ RESUME CARD ═══════════════════════ */
+function ResumeCard({ parasha, prog, onOpen }) {
+  const sk = (prog[parasha]||{}).readingStop;
+  if (!sk) return null;
+  const sefer = SFARIM.find(s => s.parshiot.includes(parasha));
+  if (!sefer) return null;
+  const [c,v] = sk.split(':').map(Number);
+  return (
+    <motion.div className={`resume-card ${sefer.theme}`}
+      onClick={()=>onOpen(parasha, sefer.id, sefer.theme)}
+      whileTap={{scale:0.97}}
+      initial={{opacity:0,y:-14}} animate={{opacity:1,y:0}}
+      transition={{type:'spring',stiffness:360,damping:30}}>
+      <div className="resume-icon">📖</div>
+      <div className="resume-info">
+        <div className="resume-label">ממשיכים לקרוא</div>
+        <div className="resume-pos">פרק {toHebNum(c)}, פסוק {toHebNum(v)}</div>
+        <div className="resume-parasha">פרשת {parasha}</div>
+      </div>
+      <div className="resume-arrow">‹</div>
+    </motion.div>
   );
 }
 
@@ -1245,6 +1301,7 @@ function App() {
                 </motion.div>
               )}
             </AnimatePresence>
+            {curParasha&&<ResumeCard parasha={curParasha} prog={prog} onOpen={openReadingView}/>}
             <div className="sefer-grid">
               {SFARIM.map((sefer,i)=>(
                 <SeferCard key={sefer.id} sefer={sefer} prog={prog}
