@@ -1234,7 +1234,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
     try {
       const ref=SEFARIA[name];
       if(!ref) throw new Error('לא נמצא מיפוי לפרשה זו');
-      const heRes=await fetch(`https://www.sefaria.org/api/texts/${ref}?lang=he&aliyot=0`);
+      const heRes=await fetch(`https://www.sefaria.org/api/texts/${ref}?aliyot=0`);
       if(!heRes.ok) throw new Error('שגיאת רשת מספריא');
       const heData=await heRes.json();
       let tgData=null;
