@@ -666,10 +666,31 @@ const RING = {
 /* ═══ HELPERS ════════════════════════════ */
 function getHebrewYear(){try{return new window.hebcal.HDate(new Date()).getFullYear();}catch{return 5786;}}
 function yearStr(y){return({5783:'תשפ"ג',5784:'תשפ"ד',5785:'תשפ"ה',5786:'תשפ"ו',5787:'תשפ"ז',5788:'תשפ"ח'})[y]||String(y);}
+const _EN2HE={
+  'Bereshit':'בראשית','Noach':'נח','Lech-Lecha':'לך לך','Vayera':'וירא',
+  'Chayei Sara':'חיי שרה','Toldot':'תולדות','Vayetzei':'ויצא','Vayishlach':'וישלח',
+  'Vayeshev':'וישב','Miketz':'מקץ','Vayigash':'ויגש','Vayechi':'ויחי',
+  'Shemot':'שמות','Vaera':'וארא','Bo':'בא','Beshalach':'בשלח',
+  'Yitro':'יתרו','Mishpatim':'משפטים','Terumah':'תרומה','Tetzaveh':'תצוה',
+  'Ki Tisa':'כי תשא','Vayakhel':'ויקהל','Pekudei':'פקודי',
+  'Vayikra':'ויקרא','Tzav':'צו','Shemini':'שמיני','Tazria':'תזריע',
+  'Metzora':'מצורע','Achrei Mot':'אחרי מות','Kedoshim':'קדושים',
+  'Emor':'אמור','Behar':'בהר','Bechukotai':'בחוקותי',
+  'Bamidbar':'במדבר','Nasso':'נשא',"Beha'alotcha":'בהעלותך',
+  "Sh'lach":'שלח','Korach':'קרח','Chukat':'חוקת','Balak':'בלק',
+  'Pinchas':'פינחס','Matot':'מטות','Masei':'מסעי',
+  'Devarim':'דברים','Vaetchanan':'ואתחנן','Eikev':'עקב',"Re'eh":'ראה',
+  'Shoftim':'שופטים','Ki Teitzei':'כי תצא','Ki Tavo':'כי תבוא',
+  'Nitzavim':'נצבים','Vayeilech':'וילך',"Ha'azinu":'האזינו',
+  'Vezot Haberakhah':'וזאת הברכה'
+};
 function detectParasha(){
   try{
-    const ev=window.hebcal.HebrewCalendar.calendar({start:new Date(),end:new Date(Date.now()+21*86400000),noHolidays:true,sedrot:true,il:false});
-    for(const e of ev){const r=e.render?.('he')||'';if(!r.startsWith('פרשת'))continue;const n=r.replace('פרשת ','').trim();for(const s of SFARIM){const f=s.parshiot.find(p=>p===n||n.startsWith(p));if(f)return f;}}
+    const ev=window.hebcal.HebrewCalendar.calendar({start:new Date(),end:new Date(Date.now()+14*86400000),noHolidays:true,sedrot:true,il:false});
+    for(const e of ev){
+      const p=e.parsha?.[0];
+      if(p&&_EN2HE[p]) return _EN2HE[p];
+    }
   }catch{}return null;
 }
 function toHebNum(n){
