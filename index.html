@@ -1140,13 +1140,29 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
     const el=document.getElementById(`rv-${stopKey}`);
     if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
   }
+  function handleClose(){
+    // auto-save last visible verse as reading position
+    if(verses.length&&bodyRef.current){
+      const cont=bodyRef.current;
+      const contTop=cont.getBoundingClientRect().top;
+      for(const v of verses){
+        const el=document.getElementById(`rv-${v.key}`);
+        if(!el) continue;
+        if(el.getBoundingClientRect().top>=contTop){
+          onUpdateStop(name,v.key);
+          break;
+        }
+      }
+    }
+    onClose();
+  }
 
   return (
     <motion.div className={`rv-overlay ${theme}`}
       initial={{x:'100%'}} animate={{x:0}} exit={{x:'100%'}}
       transition={{type:'spring',stiffness:380,damping:36}}>
       <div className="rv-header">
-        <motion.button className="rv-back" onClick={onClose} whileTap={{scale:0.93}}>‹ חזרה</motion.button>
+        <motion.button className="rv-back" onClick={handleClose} whileTap={{scale:0.93}}>‹ חזרה</motion.button>
         <div className="rv-head-title">{name}</div>
         {stopKey&&(
           <motion.button className="rv-bm-btn" onClick={jumpToStop} whileTap={{scale:0.93}} title="קפוץ לנקודת עצירה">
