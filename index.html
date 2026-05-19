@@ -23,7 +23,7 @@
   import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, persistentMultipleTabManager, memoryLocalCache, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   const cfg = {
-    apiKey:"AIzaSyDo9OAFIWXOBAd5EpAmZGCAN1frh9Atals", authDomain:"shnayim-mikra-app.web.app",
+    apiKey:"AIzaSyDo9OAFIWXOBAd5EpAmZGCAN1frh9Atals", authDomain:"shnayim-mikra-app.firebaseapp.com",
     projectId:"shnayim-mikra-app", storageBucket:"shnayim-mikra-app.firebasestorage.app",
     messagingSenderId:"530516704263", appId:"1:530516704263:web:5fac5463497cf5ef12fea2"
   };
@@ -1411,13 +1411,18 @@ function App() {
 
   useEffect(()=>{
     const {auth,onAuthStateChanged,getRedirectResult}=window._fb;
-    getRedirectResult(auth).catch(()=>{});
-    return onAuthStateChanged(auth,async u=>{
-      setUser(u);
-      if(u){const r=await fbLoad(u.uid);if(r!==null)setProg(r);else{try{const l=localStorage.getItem('mikra-prog');if(l)setProg(JSON.parse(l));}catch{}}
-        document.title='שמו״ת · '+(u.displayName?.split(' ')[0]||'');
-      }else{setProg({});document.title='שניים מקרא ואחד תרגום';}
-      setLoading(false);
+    // Handle redirect result first, then listen for auth state
+    getRedirectResult(auth).catch(e=>{
+      console.warn('redirect result error:', e?.code);
+    }).finally(()=>{
+      const unsub = onAuthStateChanged(auth,async u=>{
+        setUser(u);
+        if(u){const r=await fbLoad(u.uid);if(r!==null)setProg(r);else{try{const l=localStorage.getItem('mikra-prog');if(l)setProg(JSON.parse(l));}catch{}}
+          document.title='שמו״ת · '+(u.displayName?.split(' ')[0]||'');
+        }else{setProg({});document.title='שניים מקרא ואחד תרגום';}
+        setLoading(false);
+      });
+      return unsub;
     });
   },[]);
 
