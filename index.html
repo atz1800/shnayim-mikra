@@ -1421,7 +1421,19 @@ function App() {
     });
   },[]);
 
-  function signIn(){const{auth,provider,signInWithPopup,signInWithRedirect}=window._fb;signInWithPopup(auth,provider).catch(e=>{if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user')signInWithRedirect(auth,provider);});}
+  function signIn(){
+    const{auth,provider,signInWithPopup,signInWithRedirect}=window._fb;
+    const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+    if(isMobile||isStandalone){
+      signInWithRedirect(auth,provider);
+    } else {
+      signInWithPopup(auth,provider).catch(e=>{
+        if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user')
+          signInWithRedirect(auth,provider);
+      });
+    }
+  }
   function signOut(){window._fb.signOut(window._fb.auth);setProg({});setSheet(null);}
 
   function persist(next){try{localStorage.setItem('mikra-prog',JSON.stringify(next));}catch{}if(user){clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>fbSave(user.uid,next),1200);}}
