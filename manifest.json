@@ -1,7 +1,9 @@
 {
+  "id": "https://shnayim-mikra-app.web.app/",
   "name": "שניים מקרא ואחד תרגום",
   "short_name": "שמו״ת",
-  "start_url": "./",
+  "start_url": "https://shnayim-mikra-app.web.app/",
+  "scope": "https://shnayim-mikra-app.web.app/",
   "display": "standalone",
   "background_color": "#f2f3f8",
   "theme_color": "#1a56db",
