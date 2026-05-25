@@ -119,8 +119,9 @@ function startListening() {
       renderSidebar();
       seedBtn.classList.toggle('hidden', projects.length > 0);
     },
-    () => {
-      // orderBy might fail if index not yet created — try without ordering
+    err => {
+      // orderBy requires an index — fall back to unordered and sort client-side
+      if (unsubscribe) unsubscribe();
       const q2 = collection(db, COLLECTION);
       unsubscribe = onSnapshot(q2, snap => {
         projects = snap.docs.map(d => ({ docId: d.id, ...d.data() }));

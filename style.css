@@ -452,6 +452,32 @@ body {
   font-size: 0.85rem;
 }
 
+/* ===== LOADING ===== */
+.projects-loading {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+.projects-loading.hidden { display: none; }
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(108,99,255,0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Admin link in footer */
+.admin-footer-link {
+  color: rgba(255,255,255,0.1);
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+.admin-footer-link:hover { color: var(--text-dim); }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .nav-links { gap: 16px; }

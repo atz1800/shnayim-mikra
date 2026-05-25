@@ -7,6 +7,7 @@ const app = initializeApp(FIREBASE_CONFIG);
 const db = getFirestore(app);
 
 const grid = document.getElementById('projectsGrid');
+const loadingEl = document.getElementById('projectsLoading');
 const template = document.getElementById('cardTemplate');
 const filterBtns = document.querySelectorAll('.filter-btn');
 const projectCountEl = document.getElementById('projectCount');
@@ -83,4 +84,7 @@ async function loadProjects() {
   return STATIC_PROJECTS;
 }
 
-loadProjects().then(renderProjects);
+loadProjects().then(projects => {
+  if (loadingEl) loadingEl.classList.add('hidden');
+  renderProjects(projects);
+});
