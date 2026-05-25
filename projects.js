@@ -15,7 +15,7 @@
  *   year     – שנה
  */
 
-const PROJECTS = [
+export const PROJECTS = [
   {
     id: "shnayim-mikra",
     title: "שניים מקרא ואחד תרגום",

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — תיק עבודות</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- ======= LOGIN ======= -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <span class="logo-bracket">{</span>
+        <span>Admin</span>
+        <span class="logo-bracket">}</span>
+      </div>
+      <h1 class="login-title">כניסת מנהל</h1>
+      <p class="login-sub">כניסה מותרת לבעל האתר בלבד</p>
+      <button id="loginBtn" class="btn-google">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.8 2.3 30.2 0 24 0 14.6 0 6.6 5.5 2.7 13.5l7.9 6.1C12.5 13.3 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.6 28.4A14.6 14.6 0 0 1 9.5 24c0-1.5.3-3 .7-4.4L2.3 13.5A23.9 23.9 0 0 0 0 24c0 3.8.9 7.4 2.5 10.6l8.1-6.2z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.2 0-11.5-4.2-13.4-9.9l-8 6.1C6.5 42.5 14.6 48 24 48z"/></svg>
+        כניסה עם Google
+      </button>
+      <p id="loginError" class="login-error"></p>
+    </div>
+  </div>
+
+  <!-- ======= DASHBOARD ======= -->
+  <div id="dashboard" class="dashboard hidden">
+
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-right">
+        <a href="index.html" class="back-link" title="חזור לאתר">← האתר</a>
+        <span class="header-title">Admin Panel</span>
+      </div>
+      <div class="header-actions">
+        <button id="addBtn" class="btn-add">+ פרויקט חדש</button>
+        <button id="seedBtn" class="btn-seed hidden" title="טען פרויקטים ברירת מחדל">Seed</button>
+        <button id="logoutBtn" class="btn-logout">יציאה</button>
+      </div>
+    </header>
+
+    <!-- Body -->
+    <div class="admin-body">
+
+      <!-- Sidebar — project list -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <span id="projectCountBadge" class="count-badge">0 פרויקטים</span>
+        </div>
+        <div id="projectsList" class="projects-list">
+          <div class="list-empty hidden" id="listEmpty">
+            <p>אין פרויקטים עדיין.</p>
+            <p>לחץ "+ פרויקט חדש" כדי להתחיל.</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Edit panel -->
+      <main class="edit-panel hidden" id="editPanel">
+        <div class="edit-panel-inner">
+          <div class="panel-header">
+            <h2 id="panelTitle">פרויקט חדש</h2>
+            <button id="closePanelBtn" class="btn-close" title="סגור">✕</button>
+          </div>
+
+          <form id="projectForm" novalidate>
+            <input type="hidden" id="fieldDocId" />
+
+            <!-- Image section -->
+            <div class="form-section">
+              <label class="section-label">תמונה</label>
+              <div class="image-row">
+                <div class="image-preview-wrap" id="imagePreviewWrap">
+                  <span class="preview-placeholder" id="previewPlaceholder">🖼️</span>
+                  <img id="previewImg" class="preview-img hidden" alt="" />
+                </div>
+                <div class="image-inputs">
+                  <label class="btn-upload-file" for="imageFile">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    העלה תמונה
+                  </label>
+                  <input type="file" id="imageFile" accept="image/*" />
+                  <div class="url-row">
+                    <span class="or-label">או</span>
+                    <input type="url" id="imageUrl" class="input-field" placeholder="https://... (URL לתמונה)" />
+                  </div>
+                  <div id="uploadProgress" class="upload-progress hidden">
+                    <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+                    <span id="progressText">מעלה...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Basic fields -->
+            <div class="form-section">
+              <label class="section-label">פרטים</label>
+              <div class="form-grid">
+                <div class="field-group">
+                  <label class="field-label" for="fieldTitle">שם הפרויקט *</label>
+                  <input type="text" id="fieldTitle" class="input-field" required />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="fieldEmoji">אמוג'י</label>
+                  <input type="text" id="fieldEmoji" class="input-field emoji-input" placeholder="📱" maxlength="4" />
+                </div>
+                <div class="field-group full">
+                  <label class="field-label" for="fieldDesc">תיאור</label>
+                  <textarea id="fieldDesc" class="input-field" rows="3" placeholder="תיאור קצר של הפרויקט..."></textarea>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="fieldLink">קישור לפרויקט</label>
+                  <input type="url" id="fieldLink" class="input-field" placeholder="https://..." />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="fieldYear">שנה</label>
+                  <input type="text" id="fieldYear" class="input-field" placeholder="2025" />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="fieldCategory">קטגוריה</label>
+                  <select id="fieldCategory" class="input-field select-field">
+                    <option value="app">אפליקציה</option>
+                    <option value="web">אתר</option>
+                    <option value="tool">כלי</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="fieldOrder">סדר הצגה</label>
+                  <input type="number" id="fieldOrder" class="input-field" placeholder="0" min="0" />
+                </div>
+                <div class="field-group full">
+                  <label class="field-label" for="fieldTags">טכנולוגיות <span class="field-hint">(מופרד בפסיקים)</span></label>
+                  <input type="text" id="fieldTags" class="input-field" placeholder="React, Firebase, PWA" />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="saveBtn" class="btn-save">
+                <span id="saveBtnText">שמור</span>
+                <span id="saveBtnSpinner" class="spinner hidden"></span>
+              </button>
+              <button type="button" id="deleteBtn" class="btn-delete hidden">מחק פרויקט</button>
+            </div>
+          </form>
+        </div>
+      </main>
+
+    </div><!-- /admin-body -->
+  </div><!-- /dashboard -->
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Delete confirm modal -->
+  <div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>למחוק את הפרויקט?</h3>
+      <p id="deleteModalName" class="modal-project-name"></p>
+      <p class="modal-warning">פעולה זו לא ניתנת לביטול.</p>
+      <div class="modal-actions">
+        <button id="confirmDeleteBtn" class="btn-delete">מחק</button>
+        <button id="cancelDeleteBtn" class="btn-cancel-modal">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
