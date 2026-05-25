@@ -26,6 +26,72 @@ const PROJECTS = [
     tags: ["React", "Firebase", "PWA", "Hebcal"],
     category: "app",
     year: "2025"
+  },
+  {
+    id: "shas-tracker",
+    title: "מעקב ש\"ס",
+    desc: "אפליקציה למעקב אחרי לימוד הש\"ס. מסמן דפים שנלמדו, מציג התקדמות חזותית לפי מסכתות, ועוזר לשמור על קצב קבוע.",
+    emoji: "📖",
+    image: null,
+    link: "https://atz1800.github.io/shas-tracker/",
+    tags: ["JavaScript", "HTML", "CSS", "LocalStorage"],
+    category: "app",
+    year: "2025"
+  },
+  {
+    id: "niggunim",
+    title: "יומן הניגונים",
+    desc: "מאגר אישי לניגונים וזמירות. שומר ניגונים עם שם, מקור, דירוג ומילות מפתח — כדי שתמיד תמצא את הניגון הנכון לרגע הנכון.",
+    emoji: "🎵",
+    image: null,
+    link: "https://atz1800.github.io/niggunim/",
+    tags: ["JavaScript", "HTML", "CSS", "LocalStorage"],
+    category: "app",
+    year: "2025"
+  },
+  {
+    id: "chidushei-torah",
+    title: "חידושי תורה",
+    desc: "מחברת דיגיטלית לרישום חידושי תורה. כותב, מארגן ומחפש בחידושים שלך לפי פרשה, נושא או מקור — הכל במקום אחד.",
+    emoji: "💡",
+    image: null,
+    link: "https://atz1800.github.io/chidushei-torah/",
+    tags: ["JavaScript", "HTML", "CSS", "LocalStorage"],
+    category: "app",
+    year: "2025"
+  },
+  {
+    id: "midrash-rabbah-tracker",
+    title: "מעקב מדרש רבה",
+    desc: "כלי מעקב ייעודי ללימוד מדרש רבה. מסמן פרשיות שנלמדו, מציג אחוז השלמה לכל ספר ועוזר לסיים את כל המדרש בצורה מסודרת.",
+    emoji: "📚",
+    image: null,
+    link: "https://atz1800.github.io/midrash-rabbah-tracker/",
+    tags: ["JavaScript", "HTML", "CSS", "LocalStorage"],
+    category: "app",
+    year: "2025"
+  },
+  {
+    id: "sipurei-chaim",
+    title: "סיפורי חיים",
+    desc: "אפליקציה לתיעוד סיפורים אישיים ומשפחתיים. כותב, שומר ומגיש את הסיפורים בצורה יפה — כי כל משפחה ראויה שהסיפורים שלה יישמרו.",
+    emoji: "📝",
+    image: null,
+    link: "https://atz1800.github.io/sipurei-chaim/",
+    tags: ["JavaScript", "HTML", "CSS", "LocalStorage"],
+    category: "app",
+    year: "2025"
+  },
+  {
+    id: "dream-journal",
+    title: "יומן חלומות",
+    desc: "יומן דיגיטלי לרישום חלומות. מתעד חלומות עם תאריך, תגיות ורגשות, ועוזר לזהות דפוסים חוזרים לאורך זמן.",
+    emoji: "🌙",
+    image: null,
+    link: "https://dream-journal-aa25d.web.app/",
+    tags: ["React", "Firebase", "PWA"],
+    category: "app",
+    year: "2025"
   }
   // ← הוסף פרויקטים נוספים כאן
 ];
