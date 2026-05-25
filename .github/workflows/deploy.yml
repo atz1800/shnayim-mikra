@@ -1,0 +1,35 @@
+name: Deploy Portfolio to GitHub Pages
+
+on:
+  push:
+    branches:
+      - claude/portfolio-website-0LQga
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout portfolio branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/portfolio-website-0LQga
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: .
+          exclude_assets: >-
+            .git,
+            .github,
+            firebase.json,
+            firestore.rules,
+            storage.rules,
+            package.json,
+            sw.js,
+            manifest.json,
+            make-icons.js

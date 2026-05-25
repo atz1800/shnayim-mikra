@@ -358,7 +358,7 @@ confirmDeleteBtn.addEventListener('click', async () => {
 
 // ── Seed from static data ─────────────────────────────────────────────────────
 seedBtn.addEventListener('click', async () => {
-  if (!confirm(`לייבא ${STATIC_PROJECTS.length} פרויקטים לFIrestore?`)) return;
+  if (!confirm(`לייבא ${STATIC_PROJECTS.length} פרויקטים ל-Firestore?`)) return;
   seedBtn.disabled = true;
   try {
     for (let i = 0; i < STATIC_PROJECTS.length; i++) {
