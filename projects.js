@@ -93,5 +93,48 @@ export const PROJECTS = [
     category: "app",
     year: "2025"
   }
-  // ← הוסף פרויקטים נוספים כאן
+  {
+    id: "piaseczner",
+    title: "אתר הפיאסצ'נה",
+    desc: "אתר מידע ותוכן על האדמו\"ר מפיאסצ'נה, הרב קלונימוס קלמן שפירא הי\"ד. מרכז תורות, סיפורים ומידע על חייו ומורשתו.",
+    emoji: "✡️",
+    image: null,
+    link: "https://piaseczner.vercel.app/",
+    tags: ["Vercel", "HTML", "CSS", "JavaScript"],
+    category: "web",
+    year: "2025"
+  },
+  {
+    id: "giyur-quiz",
+    title: "שאלות ותשובות יהדות וגיור",
+    desc: "אפליקציית חידונים ללימוד יהדות ולהכנה לגיור. מכסה הלכה, מועדים, תפילה ומסורת — בפורמט שאלה-תשובה נגיש ומהנה.",
+    emoji: "🕍",
+    image: null,
+    link: "https://giyur-quiz.vercel.app/",
+    tags: ["React", "Vercel", "JavaScript"],
+    category: "app",
+    year: "2025"
+  },
+  {
+    id: "hilula-app",
+    title: "אפליקציית הילולא",
+    desc: "אפליקציה להילולות צדיקים. מציגה את ההילולות לפי תאריך עברי, פרטים על כל צדיק, ומאפשרת ליצור חיבור לימי הזיכרון המשמעותיים.",
+    emoji: "🕯️",
+    image: null,
+    link: "https://hilula-app.web.app/",
+    tags: ["React", "Firebase", "PWA"],
+    category: "app",
+    year: "2025"
+  },
+  {
+    id: "aramaic-game",
+    title: "משחק ארמית",
+    desc: "משחק אינטראקטיבי ללימוד מילים בארמית. מתאים למי שמתחיל ללמוד גמרא ורוצה לרכוש אוצר מילים בצורה קלה ומהנה.",
+    emoji: "🎮",
+    image: null,
+    link: "https://atz1800.github.io/-aramaic-game-/",
+    tags: ["HTML", "CSS", "JavaScript"],
+    category: "app",
+    year: "2025"
+  }
 ];
