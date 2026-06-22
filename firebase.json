@@ -1,10 +1,11 @@
-﻿{
+{
   "firestore": {
     "rules": "firestore.rules"
   },
   "hosting": {
-    "public": ".",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "make-icons.js"],
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "!**/.well-known", "!**/.well-known/**", "**/node_modules/**"],
+    "predeploy": ["npm run build"],
     "headers": [
       {
         "source": "sw.js",

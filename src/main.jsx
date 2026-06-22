@@ -235,6 +235,34 @@ function BigRing({ sefer, pct, size = 90 }) {
   )
 }
 
+/* ═══ CONCEPT CARD ══════════════════════ */
+function ConceptCard() {
+  return (
+    <motion.div className="concept-card" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 340, damping: 30, delay: 0.1 }}>
+      <div className="concept-title">לוח סימונים ייחודי יאפשר לנו לא לשכוח לעולם איפה עצרנו</div>
+      <div className="concept-row">
+        <div className="concept-step">
+          <div className="concept-btn c1">1</div>
+          <div className="concept-lbl">מקרא א׳</div>
+        </div>
+        <div className="concept-plus">+</div>
+        <div className="concept-step">
+          <div className="concept-btn c2">2</div>
+          <div className="concept-lbl">מקרא ב׳</div>
+        </div>
+        <div className="concept-plus">+</div>
+        <div className="concept-step">
+          <div className="concept-btn ct">תרג׳</div>
+          <div className="concept-lbl">אונקלוס</div>
+        </div>
+        <div className="concept-eq">=</div>
+        <div className="concept-result">עלייה<br />שלמה ✓</div>
+      </div>
+      <div className="concept-sub">7 עליות × 54 פרשיות — מעקב מדויק לאורך כל השנה</div>
+    </motion.div>
+  )
+}
+
 /* ═══ QUICK CARDS ═══════════════════════ */
 function WeekCard({ parasha, onOpen }) {
   const sefer = SFARIM.find(s => s.parshiot.includes(parasha))
@@ -292,7 +320,7 @@ function ParshaCard({ name, theme, prog, isCurrent, onOpen, onOpenSheet }) {
   const pct = Math.round(done / total * 100)
   const isComplete = done === total, hasProg = done > 0
   return (
-    <motion.div className={`p-card ${theme}${isComplete ? ' is-complete' : ''}${hasProg ? ' has-prog' : ''}`} onClick={onOpen} whileHover={{ y: -3, boxShadow: '0 6px 20px rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 28 }}>
+    <motion.div className={`p-card ${theme}${isComplete ? ' is-complete' : ''}${hasProg ? ' has-prog' : ''}`} onClick={onOpenSheet} whileHover={{ y: -3, boxShadow: '0 6px 20px rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 28 }}>
       {isCurrent && <div className="now-chip">השבוע</div>}
       {(prog[name] || {}).readingStop && <div className="p-bookmark">🔖</div>}
       <div className="p-name">{name}</div>
@@ -303,7 +331,7 @@ function ParshaCard({ name, theme, prog, isCurrent, onOpen, onOpenSheet }) {
         <div className="p-prog-fill" style={{ width: `${pct}%`, background: isComplete ? 'linear-gradient(90deg,#f6d365,#fda085)' : 'var(--sg)', boxShadow: isComplete ? '0 0 8px rgba(246,211,101,0.6)' : '0 0 6px var(--sglow)' }} />
       </div>
       <div className="p-footer">
-        <button className="p-sheet-btn" onClick={e => { e.stopPropagation(); onOpenSheet() }}>✓ סימון</button>
+        <button className="p-sheet-btn" onClick={e => { e.stopPropagation(); onOpen() }}>📖 קריאה</button>
       </div>
     </motion.div>
   )
@@ -375,8 +403,65 @@ function AliyaRow({ name, num, label, a, onToggle, onStop }) {
   )
 }
 
+/* ═══ CHIDDUSHIM ═════════════════════════ */
+function ChiddushimSection({ parasha, chiddushim, onAdd, onDelete }) {
+  const [showInput, setShowInput] = useState(false)
+  const [text, setText] = useState('')
+  const taRef = useRef(null)
+
+  function submit() {
+    if (!text.trim()) return
+    onAdd(parasha, text.trim())
+    setText(''); setShowInput(false)
+  }
+  function shareAll() {
+    const lines = chiddushim.map(c => `• ${c.text}  (${c.date})`).join('\n')
+    const full = `חידושים ושאלות — פרשת ${parasha}\n\n${lines}`
+    if (navigator.share) navigator.share({ title: `חידושים פרשת ${parasha}`, text: full }).catch(() => {})
+    else { navigator.clipboard?.writeText(full); alert('הועתק ללוח') }
+  }
+
+  return (
+    <div className="chid-section">
+      <div className="chid-header">
+        <span className="chid-title">💡 חידושים ושאלות</span>
+        <div style={{ display: 'flex', gap: '.35rem', alignItems: 'center' }}>
+          {chiddushim.length > 0 && <button className="chid-share" onClick={shareAll}>שתף ↗</button>}
+          <button className="chid-add-btn" onClick={() => { setShowInput(v => !v); setTimeout(() => taRef.current?.focus(), 80) }}>{showInput ? '✕' : '+'}</button>
+        </div>
+      </div>
+      <AnimatePresence>
+        {showInput && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 32 }}>
+            <div className="chid-input-wrap">
+              <textarea ref={taRef} className="chid-input" value={text} onChange={e => setText(e.target.value)} placeholder="כתוב חידוש, שאלה או מחשבה..." rows={3} onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) submit() }} />
+              <div className="chid-input-footer">
+                <button className="chid-submit" onClick={submit}>שמור</button>
+                <button className="chid-cancel" onClick={() => { setShowInput(false); setText('') }}>ביטול</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {chiddushim.length > 0 && (
+        <div className="chid-list">
+          {chiddushim.map(c => (
+            <motion.div key={c.id} className="chid-item" layout initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}>
+              <div className="chid-item-body">
+                <span className="chid-date">{c.date}</span>
+                <span className="chid-text">{c.text}</span>
+              </div>
+              <button className="chid-del" onClick={() => onDelete(parasha, c.id)}>×</button>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ═══ BOTTOM SHEET ═══════════════════════ */
-function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, onStop, onOpenRead }) {
+function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, onStop, onOpenRead, onAddChiddush, onDeleteChiddush }) {
   const aliyaData = prog[name] || {}
   const { done, total } = parshaStats(prog, name)
   const pct = Math.round(done / total * 100)
@@ -480,7 +565,7 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin, extTrans, transLang }) {
 }
 
 /* ═══ READING VIEW ═══════════════════════ */
-function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulkMark, skipStop }) {
+function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulkMark, skipStop, onAddChiddush }) {
   const [mode, setMode] = useState('shnayim')
   const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('shmot-fontsize') || '18'))
   const [loading, setLoading] = useState(true)
@@ -495,6 +580,9 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
   const [showChapNav, setShowChapNav] = useState(false)
   const [autoScroll, setAutoScroll] = useState(false)
   const [scrollSpeed, setScrollSpeed] = useState('slow')
+  const [showChidInput, setShowChidInput] = useState(false)
+  const [chidText, setChidText] = useState('')
+  const chidRef = useRef(null)
   const bodyRef = useRef(null)
   const timerRef = useRef(null)
   const posRef = useRef(null)
@@ -787,6 +875,51 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
           {!loading && !error && verses.length > 0 && <div className="rv-credit">מקור הטקסט: <a href="https://www.sefaria.org" target="_blank" rel="noopener">ספריא</a> · CC BY-NC</div>}
         </div>
       </div>
+      {/* פאנל חידושים */}
+      <AnimatePresence>
+        {showChidInput && (
+          <motion.div className="rv-chid-panel" initial={{ y: 120, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 120, opacity: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 34 }}>
+            <div className="rv-chid-panel-head">
+              <span className="rv-chid-panel-title">💡 חידושים ושאלות — {name}</span>
+              {(() => {
+                const list = (prog[name] || {}).chiddushim || []
+                if (!list.length) return null
+                function shareAll() {
+                  const txt = list.map(c => `• ${c.text}  (${c.date})`).join('\n')
+                  const full = `חידושים — פרשת ${name}\n\n${txt}`
+                  if (navigator.share) navigator.share({ title: `חידושים פרשת ${name}`, text: full }).catch(() => {})
+                  else { navigator.clipboard?.writeText(full); alert('הועתק ללוח') }
+                }
+                return <button className="rv-chid-share" onClick={shareAll}>שתף ↗</button>
+              })()}
+            </div>
+            {(() => {
+              const list = (prog[name] || {}).chiddushim || []
+              if (!list.length) return <div className="rv-chid-empty">עדיין אין חידושים לפרשה זו</div>
+              return (
+                <div className="rv-chid-list">
+                  {list.map(c => (
+                    <div key={c.id} className="rv-chid-item">
+                      <div className="rv-chid-item-body">
+                        <span className="rv-chid-date">{c.date}</span>
+                        <span className="rv-chid-text">{c.text}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
+            <textarea ref={chidRef} className="rv-chid-input" value={chidText} onChange={e => setChidText(e.target.value)} placeholder="כתוב חידוש, שאלה או מחשבה חדשה..." rows={2} />
+            <div className="rv-chid-footer">
+              <button className="rv-chid-save" onClick={() => { if (chidText.trim()) { onAddChiddush(name, chidText.trim()); setChidText('') } }}>+ הוסף</button>
+              <button className="rv-chid-cancel" onClick={() => { setShowChidInput(false); setChidText('') }}>סגור</button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <motion.button className={`rv-chid-fab${showChidInput ? ' open' : ''}`} onClick={() => { setShowChidInput(v => !v); setTimeout(() => chidRef.current?.focus(), 120) }} whileTap={{ scale: 0.9 }}>
+        {showChidInput ? '✕' : <>💡{((prog[name] || {}).chiddushim || []).length > 0 && <span className="rv-chid-badge">{((prog[name] || {}).chiddushim || []).length}</span>}</>}
+      </motion.button>
     </motion.div>
   )
 }
@@ -869,6 +1002,13 @@ function App() {
   function updateStop(parasha, num, val) {
     setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]) n[parasha] = {}; if (!n[parasha][num]) n[parasha][num] = {}; if (val) n[parasha][num].stop = val; else delete n[parasha][num].stop; persist(n); return n })
   }
+  function addChiddush(parasha, text) {
+    const date = new Date().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric', year: '2-digit' })
+    setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]) n[parasha] = {}; if (!n[parasha].chiddushim) n[parasha].chiddushim = []; n[parasha].chiddushim.unshift({ id: Date.now(), text, date }); persist(n); return n })
+  }
+  function deleteChiddush(parasha, id) {
+    setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]?.chiddushim) return prev; n[parasha].chiddushim = n[parasha].chiddushim.filter(c => c.id !== id); persist(n); return n })
+  }
   function updateReadingStop(parasha, key) {
     setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]) n[parasha] = {}; if (key) n[parasha].readingStop = key; else delete n[parasha].readingStop; persist(n); return n })
   }
@@ -926,6 +1066,7 @@ function App() {
                 </motion.div>
               )}
             </AnimatePresence>
+            <ConceptCard />
             {(() => {
               const resumeP = (curParasha && (prog[curParasha] || {}).readingStop) ? curParasha : Object.keys(prog).find(p => prog[p] && prog[p].readingStop)
               const showRow = curParasha || resumeP
@@ -951,10 +1092,10 @@ function App() {
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {sheet && <BottomSheet key="sheet" name={sheet.name} seferId={sheet.seferId} theme={sheet.theme} prog={prog} onClose={() => setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop} onOpenRead={openReadingView} />}
+        {sheet && <BottomSheet key="sheet" name={sheet.name} seferId={sheet.seferId} theme={sheet.theme} prog={prog} onClose={() => setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop} onOpenRead={openReadingView} onAddChiddush={addChiddush} onDeleteChiddush={deleteChiddush} />}
       </AnimatePresence>
       <AnimatePresence>
-        {readingView && <ReadingView key="rv" name={readingView.name} seferId={readingView.seferId} theme={readingView.theme} prog={prog} onClose={() => setReadingView(null)} onUpdateStop={updateReadingStop} onBulkMark={bulkMark} skipStop={readingView.skipStop} />}
+        {readingView && <ReadingView key="rv" name={readingView.name} seferId={readingView.seferId} theme={readingView.theme} prog={prog} onClose={() => setReadingView(null)} onUpdateStop={updateReadingStop} onBulkMark={bulkMark} skipStop={readingView.skipStop} onAddChiddush={addChiddush} />}
       </AnimatePresence>
       <AnimatePresence>
         {showOnboard && <OnboardingTooltip key="onboard" onDone={doneOnboard} />}
