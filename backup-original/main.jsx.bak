@@ -71,11 +71,11 @@ const ONKELOS_BOOK = { bereshit: 'Genesis', shemot: 'Exodus', vayikra: 'Leviticu
 const RASHI_BOOK   = { bereshit: 'Genesis', shemot: 'Exodus', vayikra: 'Leviticus', bamidbar: 'Numbers', devarim: 'Deuteronomy' }
 
 const RING = {
-  bereshit: { c1: '#3f6fa6', c2: '#5a86bd', glow: 'rgba(63,111,166,0.5)'   },
-  shemot:   { c1: '#c5862e', c2: '#d99a45', glow: 'rgba(197,134,46,0.55)'  },
-  vayikra:  { c1: '#3f8a6a', c2: '#57a584', glow: 'rgba(63,138,106,0.5)'   },
-  bamidbar: { c1: '#7a68ac', c2: '#9385c0', glow: 'rgba(122,104,172,0.5)'  },
-  devarim:  { c1: '#b5524e', c2: '#d99a45', glow: 'rgba(181,82,78,0.5)'   },
+  bereshit: { c1: '#1a56db', c2: '#0ea5e9', glow: 'rgba(26,86,219,0.5)'   },
+  shemot:   { c1: '#d97706', c2: '#f97316', glow: 'rgba(217,119,6,0.55)'  },
+  vayikra:  { c1: '#059669', c2: '#34d399', glow: 'rgba(5,150,105,0.5)'   },
+  bamidbar: { c1: '#7c3aed', c2: '#a78bfa', glow: 'rgba(124,58,237,0.5)'  },
+  devarim:  { c1: '#dc2626', c2: '#f97316', glow: 'rgba(220,38,38,0.5)'   },
 }
 
 /* ═══ HELPERS ════════════════════════════ */
@@ -175,11 +175,11 @@ function buildRashiRef(mainRef, seferId) {
 
 /* ═══ ONBOARDING ════════════════════════ */
 const ONBOARD_STEPS = [
-  { badge: '1',    bg: 'linear-gradient(135deg,#3f6fa6,#5a86bd)', label: 'קריאה ראשונה',  desc: 'לחץ כדי לסמן שקראת את העלייה פעם ראשונה' },
-  { badge: '2',    bg: 'linear-gradient(135deg,#7a68ac,#9385c0)', label: 'קריאה שנייה',   desc: 'לחץ שוב לסמן קריאה שנייה — שניים מקרא' },
-  { badge: 'תרג׳', bg: 'linear-gradient(135deg,#c5862e,#d99a45)', label: 'תרגום אונקלוס', desc: 'לחץ לאחר שקראת את התרגום — ואחד תרגום' },
-  { badge: '📍',   bg: 'linear-gradient(135deg,#3f8a6a,#57a584)', label: 'סמנייה חכמה',   desc: 'סמן היכן עצרת — האפליקציה תחזיר אותך בדיוק לשם' },
-  { badge: '📖',   bg: 'linear-gradient(135deg,#b5524e,#d99a45)', label: 'מצב קריאה',     desc: 'לחץ "קריאה" לפתוח טקסט מלא עם אונקלוס ורש"י' },
+  { badge: '1',    bg: 'linear-gradient(135deg,#1a56db,#3b82f6)', label: 'קריאה ראשונה',  desc: 'לחץ כדי לסמן שקראת את העלייה פעם ראשונה' },
+  { badge: '2',    bg: 'linear-gradient(135deg,#7c3aed,#a855f7)', label: 'קריאה שנייה',   desc: 'לחץ שוב לסמן קריאה שנייה — שניים מקרא' },
+  { badge: 'תרג׳', bg: 'linear-gradient(135deg,#d97706,#f97316)', label: 'תרגום אונקלוס', desc: 'לחץ לאחר שקראת את התרגום — ואחד תרגום' },
+  { badge: '📍',   bg: 'linear-gradient(135deg,#059669,#34d399)', label: 'סמנייה חכמה',   desc: 'סמן היכן עצרת — האפליקציה תחזיר אותך בדיוק לשם' },
+  { badge: '📖',   bg: 'linear-gradient(135deg,#dc2626,#f97316)', label: 'מצב קריאה',     desc: 'לחץ "קריאה" לפתוח טקסט מלא עם אונקלוס ורש"י' },
 ]
 function OnboardingTooltip({ onDone }) {
   return (
@@ -512,13 +512,13 @@ function StatsStrip({ prog }) {
   const pct = Math.round((s.r1 + s.r2 + s.tg) / (54 * 21) * 100)
   return (
     <div className="stats-strip">
-      <div className="stat"><span className="stat-n" style={{ background: 'linear-gradient(135deg,#3f6fa6,#5a86bd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.r1}</span><span className="stat-l">קריאה א׳</span></div>
+      <div className="stat"><span className="stat-n" style={{ background: 'linear-gradient(135deg,#1a56db,#0ea5e9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.r1}</span><span className="stat-l">קריאה א׳</span></div>
       <div className="stat-div" />
-      <div className="stat"><span className="stat-n" style={{ background: 'linear-gradient(135deg,#7a68ac,#9385c0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.r2}</span><span className="stat-l">קריאה ב׳</span></div>
+      <div className="stat"><span className="stat-n" style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.r2}</span><span className="stat-l">קריאה ב׳</span></div>
       <div className="stat-div" />
-      <div className="stat"><span className="stat-n" style={{ background: 'linear-gradient(135deg,#c5862e,#d99a45)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.tg}</span><span className="stat-l">תרגום</span></div>
+      <div className="stat"><span className="stat-n" style={{ background: 'linear-gradient(135deg,#d97706,#f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.tg}</span><span className="stat-l">תרגום</span></div>
       <div className="stat-div" />
-      <div className="stat"><span className="stat-n" style={{ background: 'linear-gradient(135deg,#3f8a6a,#57a584)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.complete}</span><span className="stat-l">שלמות</span></div>
+      <div className="stat"><span className="stat-n" style={{ background: 'linear-gradient(135deg,#059669,#34d399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.complete}</span><span className="stat-l">שלמות</span></div>
       <div className="stat-div" />
       <div className="stat-bar-wrap">
         <div className="stat-bar-track"><div className="stat-bar-fill" style={{ width: `${pct}%` }} /></div>
@@ -763,7 +763,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
         {transLoading && <span style={{ fontSize: '.6rem', color: 'var(--text3)' }}>…</span>}
       </div>
       {autoScroll && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem 1rem', background: 'rgba(247,243,236,0.7)', borderBottom: '1px solid rgba(0,0,0,0.04)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem 1rem', background: 'rgba(242,243,248,0.7)', borderBottom: '1px solid rgba(0,0,0,0.04)', flexShrink: 0 }}>
           <span style={{ fontSize: '.6rem', color: 'var(--text3)', fontWeight: 700 }}>מהירות:</span>
           {['slow', 'medium', 'fast'].map(s => (
             <button key={s} className={`rv-speed-btn${scrollSpeed === s ? ' on' : ''}`} onClick={() => setScrollSpeed(s)}>
@@ -1062,7 +1062,7 @@ function App() {
               {filterMissing && (
                 <motion.div className="filter-notice" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                   <span>מציג פרשות עם חוסרים · {missing} פרשות</span>
-                  <button className="btn-icon" style={{ color: '#b5524e', width: 22, height: 22, fontSize: '.78rem' }} onClick={() => setFilterMissing(false)}>✕</button>
+                  <button className="btn-icon" style={{ color: '#dc2626', width: 22, height: 22, fontSize: '.78rem' }} onClick={() => setFilterMissing(false)}>✕</button>
                 </motion.div>
               )}
             </AnimatePresence>
