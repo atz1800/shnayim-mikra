@@ -11,7 +11,8 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Noto+Serif+Hebrew:wght@400;500;700&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -62,6 +63,11 @@ a{color:inherit;text-decoration:none;}
   --spring:cubic-bezier(0.34,1.56,0.64,1);
   --ease-out:cubic-bezier(0.16,1,0.3,1);
   --r-sm:10px;--r-md:16px;--r-lg:22px;--r-xl:28px;
+  /* Frank Ruhl Libre has no cantillation glyphs (U+0591-U+05AF), so every
+     te'am in a Sefaria verse turns into a wide .notdef and drags the nikud
+     off its letter. Noto Serif Hebrew covers all 31 marks - use it for any
+     pointed/cantillated text, and keep Frank Ruhl Libre for UI chrome. */
+  --font-torah:'Noto Serif Hebrew','Frank Ruhl Libre',serif;
 }
 
 /* ── Per-sefer themes ─────────────────────── */
@@ -528,11 +534,11 @@ a{color:inherit;text-decoration:none;}
 .rv-pin:hover{color:#d97706;background:rgba(253,160,133,0.1);}
 .rv-pin.on{color:#d97706;}
 .rv-he{
-  font-family:'Frank Ruhl Libre',serif;line-height:2;
+  font-family:var(--font-torah);line-height:2;
   color:var(--text1);direction:rtl;
 }
 .rv-tg{
-  font-family:'Frank Ruhl Libre',serif;line-height:1.85;
+  font-family:var(--font-torah);line-height:1.85;
   color:var(--text2);direction:rtl;
   margin-block-start:.4rem;padding-block-start:.38rem;
   border-block-start:1px dashed rgba(0,0,0,0.09);
@@ -606,7 +612,7 @@ a{color:inherit;text-decoration:none;}
 .rv-read-label.rs{color:#7c3aed;}
 .rv-he-second{opacity:.78;}
 .rv-rs{
-  font-family:'Frank Ruhl Libre',serif;line-height:2;
+  font-family:var(--font-torah);line-height:2;
   color:var(--text2);
   padding:.7rem 1rem;
   background:rgba(124,58,237,0.05);
@@ -1358,7 +1364,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, skipSt
               isStop={stopKey===v.key} onPin={()=>togglePin(v.key)}/>
           ))}
           {!loading&&!error&&mode==='continuous'&&verses.length>0&&(
-            <div dir="rtl" style={{fontFamily:"'Frank Ruhl Libre',serif",fontSize,lineHeight:2,color:'var(--text1)'}}>
+            <div dir="rtl" style={{fontFamily:'var(--font-torah)',fontSize,lineHeight:2,color:'var(--text1)'}}>
               {verses.map(v=>{
                 const isStop=stopKey===v.key;
                 return (
