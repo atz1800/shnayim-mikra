@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef, Fragment } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { HebrewCalendar, HDate } from '@hebcal/core'
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion'
+import { HebrewCalendar, HDate, gematriya } from '@hebcal/core'
+import { ALIYA_LENGTHS } from './data/aliyaLengths'
+import DOMPurify from 'dompurify'
 import { initializeApp } from 'firebase/app'
 import {
   getAuth, GoogleAuthProvider,
   signInWithPopup, signInWithRedirect, getRedirectResult,
-  signOut, onAuthStateChanged
+  signOut, onAuthStateChanged, deleteUser, reauthenticateWithPopup
 } from 'firebase/auth'
 import {
   initializeFirestore,
   persistentLocalCache, persistentSingleTabManager,
   persistentMultipleTabManager, memoryLocalCache,
-  doc, setDoc, getDoc
+  doc, setDoc, deleteDoc, onSnapshot, runTransaction
 } from 'firebase/firestore'
 import './index.css'
 import { createRoot } from 'react-dom/client'
@@ -33,21 +35,45 @@ let db
 try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }) }
 catch { try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() }) }) } catch { db = initializeFirestore(app, { localCache: memoryLocalCache() }) } }
 
-async function fbSave(uid, prog) {
-  try { await setDoc(doc(db, 'users', uid), { 'mikra-progress': JSON.stringify(prog) }, { merge: true }) }
-  catch (e) { console.error(e) }
+/* כל ההתקדמות נשמרת כמחרוזת JSON אחת בשדה 'mikra-progress' (פורמט קיים — לא לשנות,
+   הגרסה החיה קוראת אותו). כדי שמכשיר אחד לא ידרוס את השני, כל שינוי נשלח כפונקציה
+   ומוחל בתוך טרנזקציה על המצב העדכני בענן — לא על העותק המקומי שאולי ישן. */
+const PROG_FIELD = 'mikra-progress'
+const userDoc = uid => doc(db, 'users', uid)
+function parseProg(data) {
+  try { const r = data && data[PROG_FIELD]; return r ? JSON.parse(r) : {} } catch { return {} }
 }
-async function fbLoad(uid) {
+async function fbMutate(uid, mutate, localNext) {
   try {
-    const snap = await getDoc(doc(db, 'users', uid))
-    if (snap.exists()) { const r = snap.data()['mikra-progress']; return r ? JSON.parse(r) : {} }
-    return {}
+    await runTransaction(db, async tx => {
+      const snap = await tx.get(userDoc(uid))
+      const next = mutate(parseProg(snap.exists() ? snap.data() : null))
+      tx.set(userDoc(uid), { [PROG_FIELD]: JSON.stringify(next) }, { merge: true })
+    })
   } catch (e) {
-    console.error(e)
-    if (e.code === 'permission-denied') alert('⚠️ Firebase: אין הרשאה.')
-    return null
+    if (e && e.code === 'permission-denied') { console.error(e); return }
+    // בלי רשת טרנזקציה נכשלת — כותבים את המצב המקומי, ו-Firestore ישלח כשיחזור חיבור
+    // לא מחכים: בלי רשת ה-Promise נפתר רק כשהחיבור חוזר
+    setDoc(userDoc(uid), { [PROG_FIELD]: JSON.stringify(localNext) }, { merge: true }).catch(console.error)
   }
 }
+
+const localKey = uid => `mikra-prog:${uid}`
+function loadLocal(uid) { try { const l = localStorage.getItem(localKey(uid)); return l ? JSON.parse(l) : null } catch { return null } }
+function saveLocal(uid, prog) { try { localStorage.setItem(localKey(uid), JSON.stringify(prog)) } catch {} }
+function clearLocal(uid) { try { localStorage.removeItem(localKey(uid)); localStorage.removeItem('mikra-prog') } catch {} }
+function lsGet(k) { try { return localStorage.getItem(k) } catch { return null } }
+function lsSet(k, v) { try { localStorage.setItem(k, v) } catch {} }
+
+/* מחיל עריכה על עותק עמוק ומחזיר אותו — כך אותה פונקציה רצה גם מקומית וגם בטרנזקציה */
+const edit = fn => prev => { const n = JSON.parse(JSON.stringify(prev || {})); fn(n); return n }
+
+/* טקסט מספריא מגיע כ-HTML; מסננים לפני הזרקה כדי שתוכן זדוני לא ירוץ אצלנו */
+const SAFE_HTML = { ALLOWED_TAGS: ['b', 'i', 'u', 'em', 'strong', 'span', 'br', 'small', 'big', 'sup', 'sub'], ALLOWED_ATTR: ['class', 'dir'] }
+const clean = html => (typeof html === 'string' && html ? DOMPurify.sanitize(html, SAFE_HTML) : '')
+
+/* מקלדת: Enter/רווח מפעילים אלמנט עם role="button" */
+const onKeyActivate = fn => e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(e) } }
 
 /* ═══ DATA ════════════════════════════════ */
 const SFARIM = [
@@ -80,7 +106,7 @@ const RING = {
 
 /* ═══ HELPERS ════════════════════════════ */
 function getHebrewYear() { try { return new HDate(new Date()).getFullYear() } catch { return 5786 } }
-function yearStr(y) { return ({ 5783:'תשפ"ג', 5784:'תשפ"ד', 5785:'תשפ"ה', 5786:'תשפ"ו', 5787:'תשפ"ז', 5788:'תשפ"ח' })[y] || String(y) }
+function yearStr(y) { try { return gematriya(y % 1000) } catch { return String(y) } }
 
 const _EN2HE = {
   'Bereshit':'בראשית','Noach':'נח','Lech-Lecha':'לך לך','Vayera':'וירא',
@@ -89,7 +115,7 @@ const _EN2HE = {
   'Shemot':'שמות','Vaera':'וארא','Bo':'בא','Beshalach':'בשלח',
   'Yitro':'יתרו','Mishpatim':'משפטים','Terumah':'תרומה','Tetzaveh':'תצוה',
   'Ki Tisa':'כי תשא','Vayakhel':'ויקהל','Pekudei':'פקודי',
-  'Vayikra':'ויקרא','Tzav':'צו','Shemini':'שמיני','Tazria':'תזריע',
+  'Vayikra':'ויקרא','Tzav':'צו','Shemini':'שמיני','Shmini':'שמיני','Tazria':'תזריע',
   'Metzora':'מצורע','Achrei Mot':'אחרי מות','Kedoshim':'קדושים',
   'Emor':'אמור','Behar':'בהר','Bechukotai':'בחוקותי',
   'Bamidbar':'במדבר','Nasso':'נשא',"Beha'alotcha":'בהעלותך',
@@ -101,16 +127,27 @@ const _EN2HE = {
   'Vezot Haberakhah':'וזאת הברכה'
 }
 
+/* לוח הקריאה בארץ ובחו״ל מתפצל בחלק מהשבועות — מזהים לפי אזור הזמן של המכשיר */
+const IN_ISRAEL = (() => {
+  try { const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; return !tz || tz === 'Asia/Jerusalem' || tz === 'Asia/Tel_Aviv' }
+  catch { return true }
+})()
+
+/* מחזיר מערך שמות בעברית — שניים בשבוע של פרשיות מחוברות (ויקהל־פקודי וכו׳) — או null */
 function detectParasha() {
   try {
-    const ev = HebrewCalendar.calendar({ start: new Date(), end: new Date(Date.now() + 14 * 86400000), noHolidays: true, sedrot: true, il: true })
+    const ev = HebrewCalendar.calendar({ start: new Date(), end: new Date(Date.now() + 21 * 86400000), noHolidays: true, sedrot: true, il: IN_ISRAEL })
     for (const e of ev) {
-      const p = e.parsha?.[0]
-      if (p && _EN2HE[p]) return _EN2HE[p]
+      const names = (e.parsha || []).map(p => _EN2HE[p]).filter(Boolean)
+      if (names.length) return names
     }
   } catch {}
   return null
 }
+
+const _HE2EN = Object.fromEntries(Object.entries(_EN2HE).filter(([en]) => en !== 'Shemini').map(([en, he]) => [he, en]))
+/* מספר הפסוקים בעלייה (לבורר פסוק העצירה); 50 אם אין מידע */
+function aliyaVerseCount(name, num) { return ALIYA_LENGTHS[_HE2EN[name]]?.[num - 1] || 50 }
 
 function toHebNum(n) {
   if (n === 15) return 'טו'; if (n === 16) return 'טז'
@@ -157,7 +194,7 @@ function buildVerseList(heData, tgData, rsData) {
     chapArr.forEach((heText, vi) => {
       if (!heText) return
       const rs = Array.isArray(rsChap) ? (rsChap[vi] || '') : ''
-      verses.push({ chap: chapNum, verse: vi + 1, key: `${chapNum}:${vi + 1}`, he: heText, tg: (Array.isArray(tgChap) ? tgChap[vi] : '') || '', rs: Array.isArray(rs) ? rs.join(' ') : rs })
+      verses.push({ chap: chapNum, verse: vi + 1, key: `${chapNum}:${vi + 1}`, he: clean(heText), tg: clean(Array.isArray(tgChap) ? tgChap[vi] : ''), rs: clean(Array.isArray(rs) ? rs.join(' ') : rs) })
     })
   })
   return verses
@@ -264,35 +301,54 @@ function ConceptCard() {
 }
 
 /* ═══ QUICK CARDS ═══════════════════════ */
-function WeekCard({ parasha, onOpen }) {
-  const sefer = SFARIM.find(s => s.parshiot.includes(parasha))
+const resumeKey = p => (p && (p.readingStop || p.lastPos)) || null
+function WeekCard({ parshiot, onOpen }) {
+  const sefer = SFARIM.find(s => s.parshiot.includes(parshiot[0]))
   if (!sefer) return null
+  const anim = { initial: { opacity: 0, y: -12 }, animate: { opacity: 1, y: 0 }, transition: { type: 'spring', stiffness: 360, damping: 30 } }
+  if (parshiot.length > 1) {
+    // פרשיות מחוברות — כל אחת נפתחת בנפרד
+    return (
+      <motion.div className={`week-card ${sefer.theme}`} style={{ cursor: 'default' }} {...anim}>
+        <div className="qc-icon" aria-hidden="true">📅</div>
+        <div className="qc-info">
+          <div className="qc-label">פרשת השבוע</div>
+          <div className="qc-main">{parshiot.join('־')}</div>
+          <div className="qc-chips">
+            {parshiot.map(p => <button key={p} className="qc-chip" onClick={() => onOpen(p, sefer.id, sefer.theme, true)}>📖 {p}</button>)}
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+  const open = () => onOpen(parshiot[0], sefer.id, sefer.theme, true)
   return (
-    <motion.div className={`week-card ${sefer.theme}`} onClick={() => onOpen(parasha, sefer.id, sefer.theme, true)} whileTap={{ scale: 0.97 }} initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 360, damping: 30 }}>
-      <div className="qc-icon">📅</div>
+    <motion.div className={`week-card ${sefer.theme}`} role="button" tabIndex={0} onClick={open} onKeyDown={onKeyActivate(open)} whileTap={{ scale: 0.97 }} {...anim}>
+      <div className="qc-icon" aria-hidden="true">📅</div>
       <div className="qc-info">
         <div className="qc-label">פרשת השבוע</div>
-        <div className="qc-main">{parasha}</div>
+        <div className="qc-main">{parshiot[0]}</div>
       </div>
-      <div className="qc-arrow">‹</div>
+      <div className="qc-arrow" aria-hidden="true">‹</div>
     </motion.div>
   )
 }
 function ResumeCard({ parasha, prog, onOpen }) {
-  const sk = (prog[parasha] || {}).readingStop
+  const sk = resumeKey(prog[parasha])
   if (!sk) return null
   const sefer = SFARIM.find(s => s.parshiot.includes(parasha))
   if (!sefer) return null
   const [c, v] = sk.split(':').map(Number)
+  const open = () => onOpen(parasha, sefer.id, sefer.theme)
   return (
-    <motion.div className={`resume-card ${sefer.theme}`} onClick={() => onOpen(parasha, sefer.id, sefer.theme)} whileTap={{ scale: 0.97 }} initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 360, damping: 30 }}>
-      <div className="qc-icon">🔖</div>
+    <motion.div className={`resume-card ${sefer.theme}`} role="button" tabIndex={0} onClick={open} onKeyDown={onKeyActivate(open)} whileTap={{ scale: 0.97 }} initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 360, damping: 30 }}>
+      <div className="qc-icon" aria-hidden="true">🔖</div>
       <div className="qc-info">
         <div className="qc-label">ממשיכים מ...</div>
         <div className="qc-main">פרק {toHebNum(c)}, פסוק {toHebNum(v)}</div>
         <div className="qc-sub">פרשת {parasha}</div>
       </div>
-      <div className="qc-arrow">‹</div>
+      <div className="qc-arrow" aria-hidden="true">‹</div>
     </motion.div>
   )
 }
@@ -303,7 +359,7 @@ function SeferCard({ sefer, prog, isSelected, onClick, isLast }) {
   const pct = Math.round(done / total * 100)
   const remaining = sefer.parshiot.length - sefer.parshiot.filter(n => parshaStats(prog, n).done === 21).length
   return (
-    <motion.div className={`sc-card ${sefer.theme}${isSelected ? ' selected' : ''}${isLast ? ' last-card' : ''}`} onClick={onClick} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
+    <motion.div className={`sc-card ${sefer.theme}${isSelected ? ' selected' : ''}${isLast ? ' last-card' : ''}`} role="button" tabIndex={0} aria-label={`ספר ${sefer.name}, ${pct}% הושלמו`} onClick={onClick} onKeyDown={onKeyActivate(onClick)} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
       <div className="sc-name">{sefer.name}</div>
       <BigRing sefer={sefer} pct={pct} size={isLast ? 80 : 86} />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.3rem' }}>
@@ -320,25 +376,25 @@ function ParshaCard({ name, theme, prog, isCurrent, onOpen, onOpenSheet }) {
   const pct = Math.round(done / total * 100)
   const isComplete = done === total, hasProg = done > 0
   return (
-    <motion.div className={`p-card ${theme}${isComplete ? ' is-complete' : ''}${hasProg ? ' has-prog' : ''}`} onClick={onOpenSheet} whileHover={{ y: -3, boxShadow: '0 6px 20px rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 28 }}>
+    <motion.div className={`p-card ${theme}${isComplete ? ' is-complete' : ''}${hasProg ? ' has-prog' : ''}`} role="button" tabIndex={0} aria-label={`פרשת ${name}, ${pct}% — פתח לוח סימון`} onClick={onOpenSheet} onKeyDown={e => { if (e.target === e.currentTarget) onKeyActivate(onOpenSheet)(e) }} whileHover={{ y: -3, boxShadow: '0 6px 20px rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 400, damping: 28 }}>
       {isCurrent && <div className="now-chip">השבוע</div>}
-      {(prog[name] || {}).readingStop && <div className="p-bookmark">🔖</div>}
+      {(prog[name] || {}).readingStop && <div className="p-bookmark" aria-hidden="true">🔖</div>}
       <div className="p-name">{name}</div>
-      <div className="p-dots">
+      <div className="p-dots" aria-hidden="true">
         {[1,2,3,4,5,6,7].map(i => { const d = aliyaDone((prog[name] || {})[i]); return <div key={i} className={`p-dot d${d}`} /> })}
       </div>
-      <div className="p-prog" style={{ marginBottom: '.45rem' }}>
+      <div className="p-prog" style={{ marginBottom: '.45rem' }} aria-hidden="true">
         <div className="p-prog-fill" style={{ width: `${pct}%`, background: isComplete ? 'linear-gradient(90deg,#f6d365,#fda085)' : 'var(--sg)', boxShadow: isComplete ? '0 0 8px rgba(246,211,101,0.6)' : '0 0 6px var(--sglow)' }} />
       </div>
       <div className="p-footer">
-        <button className="p-sheet-btn" onClick={e => { e.stopPropagation(); onOpen() }}>📖 קריאה</button>
+        <button className="p-sheet-btn" aria-label={`קריאת פרשת ${name}`} onClick={e => { e.stopPropagation(); onOpen() }}>📖 קריאה</button>
       </div>
     </motion.div>
   )
 }
 
 /* ═══ PARSHOT VIEW ═══════════════════════ */
-function ParshotView({ sefer, prog, currentParasha, filterMissing, onOpen, onOpenSheet, onBack }) {
+function ParshotView({ sefer, prog, currentParshiot, filterMissing, onOpen, onOpenSheet, onBack }) {
   const { done, total } = seferStats(prog, sefer)
   const pct = Math.round(done / total * 100)
   const visible = filterMissing ? sefer.parshiot.filter(n => parshaStats(prog, n).done < 21) : sefer.parshiot
@@ -348,13 +404,13 @@ function ParshotView({ sefer, prog, currentParasha, filterMissing, onOpen, onOpe
         <motion.button className="psv-back-btn" onClick={onBack} whileTap={{ scale: 0.93 }}>‹ חזרה</motion.button>
         <BigRing sefer={sefer} pct={pct} size={52} />
         <div className="psv-info">
-          <div className="psv-name">{sefer.name}</div>
+          <h1 className="psv-name">{sefer.name}</h1>
           <div className="psv-sub">{done}/{total} · {pct}% · {sefer.parshiot.length} פרשיות</div>
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(145px,1fr))', gap: '.6rem' }}>
         {visible.map(name => (
-          <ParshaCard key={name} name={name} theme={sefer.theme} prog={prog} isCurrent={currentParasha === name}
+          <ParshaCard key={name} name={name} theme={sefer.theme} prog={prog} isCurrent={!!currentParshiot && currentParshiot.includes(name)}
             onOpen={() => onOpen(name, sefer.theme, sefer.id)}
             onOpenSheet={() => onOpenSheet(name, sefer.theme, sefer.id)} />
         ))}
@@ -367,33 +423,33 @@ function ParshotView({ sefer, prog, currentParasha, filterMissing, onOpen, onOpe
 function AliyaRow({ name, num, label, a, onToggle, onStop }) {
   const [showPicker, setShowPicker] = useState(false)
   const lvl = aliyaDone(a)
-  const VERSES = Array.from({ length: 50 }, (_, i) => i + 1)
+  const VERSES = Array.from({ length: aliyaVerseCount(name, num) }, (_, i) => i + 1)
   function pickVerse(v) { onStop(name, num, toHebNum(v)); setShowPicker(false) }
   function clearStop(e) { e.stopPropagation(); onStop(name, num, ''); setShowPicker(false) }
   return (
     <div>
       <div className="aliya-row">
-        <div className="aliya-idx">{num}</div>
+        <div className="aliya-idx" aria-hidden="true">{num}</div>
         <span className="aliya-name">{label}</span>
         <div className="aliya-actions">
-          <motion.button className={`act-btn r1 ${a.r1 ? 'on' : 'off'}`} whileTap={{ scale: 0.87 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }} onClick={() => onToggle(name, num, 'r1')}>1</motion.button>
-          <motion.button className={`act-btn r2 ${a.r2 ? 'on' : 'off'}`} whileTap={{ scale: 0.87 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }} onClick={() => onToggle(name, num, 'r2')}>2</motion.button>
-          <motion.button className={`act-btn tg ${a.tg ? 'on' : 'off'}`} whileTap={{ scale: 0.87 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }} onClick={() => onToggle(name, num, 'tg')}>תרג׳</motion.button>
+          <motion.button className={`act-btn r1 ${a.r1 ? 'on' : 'off'}`} aria-pressed={!!a.r1} aria-label={`עליית ${label} — קריאה ראשונה`} whileTap={{ scale: 0.87 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }} onClick={() => onToggle(name, num, 'r1')}>1</motion.button>
+          <motion.button className={`act-btn r2 ${a.r2 ? 'on' : 'off'}`} aria-pressed={!!a.r2} aria-label={`עליית ${label} — קריאה שנייה`} whileTap={{ scale: 0.87 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }} onClick={() => onToggle(name, num, 'r2')}>2</motion.button>
+          <motion.button className={`act-btn tg ${a.tg ? 'on' : 'off'}`} aria-pressed={!!a.tg} aria-label={`עליית ${label} — תרגום`} whileTap={{ scale: 0.87 }} transition={{ type: 'spring', stiffness: 500, damping: 20 }} onClick={() => onToggle(name, num, 'tg')}>תרג׳</motion.button>
         </div>
         <div className="stop-wrap">
-          <motion.button className={`btn-stop${a.stop ? ' has-val' : ''}`} whileTap={{ scale: 0.9 }} onClick={() => setShowPicker(v => !v)} title="סמן פסוק עצירה">
+          <motion.button className={`btn-stop${a.stop ? ' has-val' : ''}`} whileTap={{ scale: 0.9 }} onClick={() => setShowPicker(v => !v)} title="סמן פסוק עצירה" aria-label={a.stop ? `פסוק עצירה ${a.stop} — שנה` : `סמן פסוק עצירה בעליית ${label}`} aria-expanded={showPicker}>
             {a.stop ? `פס׳ ${a.stop}` : '📍'}
           </motion.button>
-          {a.stop && <button className="btn-stop-clear" onClick={clearStop}>×</button>}
+          {a.stop && <button className="btn-stop-clear" onClick={clearStop} aria-label="נקה פסוק עצירה">×</button>}
         </div>
-        {lvl === 3 && <span className="aliya-check">✓</span>}
+        {lvl === 3 && <span className="aliya-check" aria-label="הושלם">✓</span>}
       </div>
       <AnimatePresence>
         {showPicker && (
           <motion.div className="verse-picker-wrap" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 32 }}>
             <div className="verse-picker">
               {VERSES.map(v => (
-                <motion.button key={v} className={`vchip${a.stop === toHebNum(v) ? ' sel' : ''}`} whileTap={{ scale: 0.85 }} transition={{ type: 'spring', stiffness: 600, damping: 20 }} onClick={() => pickVerse(v)}>{toHebNum(v)}</motion.button>
+                <motion.button key={v} className={`vchip${a.stop === toHebNum(v) ? ' sel' : ''}`} aria-label={`פסוק ${toHebNum(v)}`} whileTap={{ scale: 0.85 }} transition={{ type: 'spring', stiffness: 600, damping: 20 }} onClick={() => pickVerse(v)}>{toHebNum(v)}</motion.button>
               ))}
             </div>
           </motion.div>
@@ -403,74 +459,18 @@ function AliyaRow({ name, num, label, a, onToggle, onStop }) {
   )
 }
 
-/* ═══ CHIDDUSHIM ═════════════════════════ */
-function ChiddushimSection({ parasha, chiddushim, onAdd, onDelete }) {
-  const [showInput, setShowInput] = useState(false)
-  const [text, setText] = useState('')
-  const taRef = useRef(null)
-
-  function submit() {
-    if (!text.trim()) return
-    onAdd(parasha, text.trim())
-    setText(''); setShowInput(false)
-  }
-  function shareAll() {
-    const lines = chiddushim.map(c => `• ${c.text}  (${c.date})`).join('\n')
-    const full = `חידושים ושאלות — פרשת ${parasha}\n\n${lines}`
-    if (navigator.share) navigator.share({ title: `חידושים פרשת ${parasha}`, text: full }).catch(() => {})
-    else { navigator.clipboard?.writeText(full); alert('הועתק ללוח') }
-  }
-
-  return (
-    <div className="chid-section">
-      <div className="chid-header">
-        <span className="chid-title">💡 חידושים ושאלות</span>
-        <div style={{ display: 'flex', gap: '.35rem', alignItems: 'center' }}>
-          {chiddushim.length > 0 && <button className="chid-share" onClick={shareAll}>שתף ↗</button>}
-          <button className="chid-add-btn" onClick={() => { setShowInput(v => !v); setTimeout(() => taRef.current?.focus(), 80) }}>{showInput ? '✕' : '+'}</button>
-        </div>
-      </div>
-      <AnimatePresence>
-        {showInput && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 32 }}>
-            <div className="chid-input-wrap">
-              <textarea ref={taRef} className="chid-input" value={text} onChange={e => setText(e.target.value)} placeholder="כתוב חידוש, שאלה או מחשבה..." rows={3} onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) submit() }} />
-              <div className="chid-input-footer">
-                <button className="chid-submit" onClick={submit}>שמור</button>
-                <button className="chid-cancel" onClick={() => { setShowInput(false); setText('') }}>ביטול</button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {chiddushim.length > 0 && (
-        <div className="chid-list">
-          {chiddushim.map(c => (
-            <motion.div key={c.id} className="chid-item" layout initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}>
-              <div className="chid-item-body">
-                <span className="chid-date">{c.date}</span>
-                <span className="chid-text">{c.text}</span>
-              </div>
-              <button className="chid-del" onClick={() => onDelete(parasha, c.id)}>×</button>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 /* ═══ BOTTOM SHEET ═══════════════════════ */
-function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, onStop, onOpenRead, onAddChiddush, onDeleteChiddush }) {
+function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, onStop, onOpenRead }) {
   const aliyaData = prog[name] || {}
   const { done, total } = parshaStats(prog, name)
   const pct = Math.round(done / total * 100)
+  function clearAll() { if (confirm(`לנקות את כל הסימונים בפרשת ${name}?`)) onBulk(name, null, false) }
   return (
     <motion.div className="bs-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={e => e.target === e.currentTarget && onClose()}>
-      <motion.div className={`bs-sheet ${theme}`} initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 380, damping: 36 }}>
-        <div className="bs-handle" />
+      <motion.div className={`bs-sheet ${theme}`} role="dialog" aria-modal="true" aria-label={`לוח סימון — פרשת ${name}`} initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 380, damping: 36 }}>
+        <div className="bs-handle" aria-hidden="true" />
         <div className="bs-head">
-          <div style={{ flex: 1 }}><div className="bs-title">{name}</div></div>
+          <div style={{ flex: 1 }}><h2 className="bs-title">{name}</h2></div>
           <div className="bs-prog">
             <span className="bs-prog-n" style={{ color: pct === 100 ? '#c6891a' : 'var(--sc)' }}>{pct}%</span>
             <span className="bs-prog-l">{done}/{total}</span>
@@ -478,18 +478,18 @@ function BottomSheet({ name, seferId, theme, prog, onClose, onToggle, onBulk, on
           <div className="bs-links">
             {sefText(name) && <a className="btn-link text" href={sefText(name)} target="_blank" rel="noopener">ספריא ↗</a>}
           </div>
-          <button className="btn-close" onClick={onClose}>✕</button>
+          <button className="btn-close" onClick={onClose} aria-label="סגירה">✕</button>
         </div>
         <div className="bs-bulk">
           <motion.button className="bulk-btn b1" whileTap={{ scale: 0.93 }} onClick={() => onBulk(name, 'r1', true)}>✓ כל 1</motion.button>
           <motion.button className="bulk-btn b2" whileTap={{ scale: 0.93 }} onClick={() => onBulk(name, 'r2', true)}>✓ כל 2</motion.button>
           <motion.button className="bulk-btn bt" whileTap={{ scale: 0.93 }} onClick={() => onBulk(name, 'tg', true)}>✓ כל תרגום</motion.button>
-          <motion.button className="bulk-btn bx" whileTap={{ scale: 0.93 }} onClick={() => onBulk(name, null, false)}>× נקה</motion.button>
+          <motion.button className="bulk-btn bx" whileTap={{ scale: 0.93 }} onClick={clearAll}>× נקה</motion.button>
         </div>
         <div style={{ padding: '.45rem 1.1rem .2rem', display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <motion.button className="btn-read-small" onClick={() => onOpenRead(name, seferId, theme)} whileTap={{ scale: 0.97 }}>📖 קריאה</motion.button>
+          <motion.button className="btn-read-small" onClick={() => onOpenRead(name, seferId, theme, true)} whileTap={{ scale: 0.97 }}>📖 קריאה</motion.button>
           {(() => {
-            const sk = (prog[name] || {}).readingStop
+            const sk = resumeKey(prog[name])
             if (!sk) return null
             const [c, v] = sk.split(':').map(Number)
             return <motion.button className="btn-resume-small" onClick={() => onOpenRead(name, seferId, theme)} whileTap={{ scale: 0.97 }}>🔖 פרק {toHebNum(c)}, פסוק {toHebNum(v)}</motion.button>
@@ -539,7 +539,7 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin, extTrans, transLang }) {
     <div className={`rv-verse${isStop ? ' is-stop' : ''}`} id={`rv-${v.key}`}>
       <div className="rv-vnum">
         <span>{isStop && <span className="rv-stop-chip">עצרתי כאן</span>}{toHebNum(v.chap)}:{toHebNum(v.verse)}</span>
-        <button className={`rv-pin${isStop ? ' on' : ''}`} onClick={onPin} title="סמן עצירה">📍</button>
+        <button className={`rv-pin${isStop ? ' on' : ''}`} onClick={onPin} title="סמן עצירה" aria-label={isStop ? 'הסר סמנייה' : 'סמן עצירה כאן'} aria-pressed={isStop}>📍</button>
       </div>
       {mode === 'shnayim' ? (
         <>
@@ -565,9 +565,9 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin, extTrans, transLang }) {
 }
 
 /* ═══ READING VIEW ═══════════════════════ */
-function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulkMark, skipStop, onAddChiddush }) {
+function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpdateLastPos, onBulkMark, skipStop, onAddChiddush, onDeleteChiddush }) {
   const [mode, setMode] = useState('shnayim')
-  const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('shmot-fontsize') || '18'))
+  const [fontSize, setFontSize] = useState(() => { const n = parseInt(lsGet('shmot-fontsize'), 10); return n >= 14 && n <= 28 ? n : 18 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [verses, setVerses] = useState([])
@@ -586,7 +586,12 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
   const bodyRef = useRef(null)
   const timerRef = useRef(null)
   const posRef = useRef(null)
-  const stopKey = (prog[name] || {}).readingStop || null
+  const stopKey = (prog[name] || {}).readingStop || null   // סמנייה ידנית (📍)
+  const resumeAt = resumeKey(prog[name])                     // סמנייה ידנית, ואם אין — המקום האחרון
+  // המקום האחרון נשמר בכל יציאה (כפתור, מחוות חזור, מעבר לרקע) — בלי לגעת בסמנייה הידנית
+  const lastPosCb = useRef(onUpdateLastPos)
+  lastPosCb.current = onUpdateLastPos
+  const savePos = () => { if (posRef.current) lastPosCb.current(name, posRef.current) }
 
   useEffect(() => { rashiLoadedRef.current = false; load() }, [name])
 
@@ -609,19 +614,18 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
         setVerses(prev => prev.map(v => {
           const rsChap = rsChaps[v.chap - rsStart] || []
           const raw = Array.isArray(rsChap) ? rsChap[v.verse - 1] : ''
-          const rs = Array.isArray(raw) ? raw.join(' ') : (raw || '')
+          const rs = clean(Array.isArray(raw) ? raw.join(' ') : (raw || ''))
           return { ...v, rs }
         }))
       } catch {} finally { setRashiLoading(false) }
     })()
-  }, [mode])
+  }, [mode, loading, verses.length])
 
   useEffect(() => {
-    if (stopKey && !loading && !skipStop) {
-      const el = document.getElementById(`rv-${stopKey}`)
+    if (resumeAt && !loading && !skipStop) {
+      const el = document.getElementById(`rv-${resumeAt}`)
       if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350)
     }
-    if (!loading && verses.length) posRef.current = verses[0].key
   }, [loading])
 
   useEffect(() => {
@@ -640,10 +644,10 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
   }, [verses])
 
   useEffect(() => {
-    function onHide() { if (document.hidden && posRef.current) onUpdateStop(name, posRef.current) }
+    function onHide() { if (document.hidden) savePos() }
     document.addEventListener('visibilitychange', onHide)
-    return () => document.removeEventListener('visibilitychange', onHide)
-  }, [name, verses])
+    return () => { document.removeEventListener('visibilitychange', onHide); savePos() }
+  }, [name])
 
   useEffect(() => {
     clearInterval(timerRef.current)
@@ -672,7 +676,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
       const map = {}
       chaps.forEach((ch, ci) => {
         const cNum = startChap + ci
-        ;(Array.isArray(ch) ? ch : [ch]).forEach((txt, vi) => { if (typeof txt === 'string') map[`${cNum}:${vi + 1}`] = txt.replace(/<[^>]*>/g, '') })
+        ;(Array.isArray(ch) ? ch : [ch]).forEach((txt, vi) => { if (typeof txt === 'string') map[`${cNum}:${vi + 1}`] = clean(txt.replace(/<[^>]*>/g, '')) })
       })
       setExtTrans(map)
     }).catch(() => setExtTrans({})).finally(() => setTransLoading(false))
@@ -718,42 +722,32 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
   }
 
   function togglePin(key) { onUpdateStop(name, stopKey === key ? '' : key) }
-  function jumpToStop() { const el = document.getElementById(`rv-${stopKey}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
-  function handleClose() {
-    if (verses.length && bodyRef.current) {
-      const cont = bodyRef.current, contTop = cont.getBoundingClientRect().top
-      for (const v of verses) {
-        const el = document.getElementById(`rv-${v.key}`)
-        if (!el) continue
-        if (el.getBoundingClientRect().top >= contTop) { onUpdateStop(name, v.key); break }
-      }
-    }
-    onClose()
-  }
+  function jumpToStop() { const el = document.getElementById(`rv-${resumeAt}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
+  function handleClose() { onClose() }   // המיקום נשמר ב-cleanup של ה-effect למעלה
 
   return (
     <motion.div className={`rv-overlay ${theme}`} initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 380, damping: 36 }}>
       <div className="rv-header">
         <motion.button className="rv-back" onClick={handleClose} whileTap={{ scale: 0.93 }}>‹ חזרה</motion.button>
         <div className="rv-head-title">{name}</div>
-        {stopKey && <motion.button className="rv-bm-btn" onClick={jumpToStop} whileTap={{ scale: 0.93 }}>🔖 קפוץ</motion.button>}
-        <motion.button className={`rv-ascroll${autoScroll ? ' on' : ''}`} onClick={() => setAutoScroll(v => !v)} whileTap={{ scale: 0.93 }}>
+        {resumeAt && <motion.button className="rv-bm-btn" onClick={jumpToStop} whileTap={{ scale: 0.93 }} aria-label={stopKey ? 'קפוץ לסמנייה' : 'קפוץ למקום האחרון'}>🔖 קפוץ</motion.button>}
+        <motion.button className={`rv-ascroll${autoScroll ? ' on' : ''}`} onClick={() => setAutoScroll(v => !v)} whileTap={{ scale: 0.93 }} aria-pressed={autoScroll}>
           {autoScroll ? '⏸ עצור' : '▶ גלילה'}
         </motion.button>
       </div>
       <div className="rv-ctrl">
-        <motion.button className={`rv-mode${mode === 'shnayim' ? ' on' : ''}`} onClick={() => setMode('shnayim')} whileTap={{ scale: 0.93 }}>שניים ואחד</motion.button>
-        <motion.button className={`rv-mode${mode === 'paired' ? ' on' : ''}`} onClick={() => setMode('paired')} whileTap={{ scale: 0.93 }}>פסוק ותרגום</motion.button>
-        <motion.button className={`rv-mode${mode === 'continuous' ? ' on' : ''}`} onClick={() => setMode('continuous')} whileTap={{ scale: 0.93 }}>רצוף</motion.button>
-        <motion.button className={`rv-mode${mode === 'rashi' ? ' on' : ''}`} onClick={() => setMode('rashi')} whileTap={{ scale: 0.93 }}>רש״י</motion.button>
+        <motion.button className={`rv-mode${mode === 'shnayim' ? ' on' : ''}`} aria-pressed={mode === 'shnayim'} onClick={() => setMode('shnayim')} whileTap={{ scale: 0.93 }}>שניים ואחד</motion.button>
+        <motion.button className={`rv-mode${mode === 'paired' ? ' on' : ''}`} aria-pressed={mode === 'paired'} onClick={() => setMode('paired')} whileTap={{ scale: 0.93 }}>פסוק ותרגום</motion.button>
+        <motion.button className={`rv-mode${mode === 'continuous' ? ' on' : ''}`} aria-pressed={mode === 'continuous'} onClick={() => setMode('continuous')} whileTap={{ scale: 0.93 }}>רצוף</motion.button>
+        <motion.button className={`rv-mode${mode === 'rashi' ? ' on' : ''}`} aria-pressed={mode === 'rashi'} onClick={() => setMode('rashi')} whileTap={{ scale: 0.93 }}>רש״י</motion.button>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', flexShrink: 0 }}>
           <span style={{ fontSize: '.58rem', color: 'var(--text3)', fontWeight: 700 }}>גודל</span>
-          <button className="rv-fbtn" onClick={() => setFontSize(s => { const n = Math.max(14, s - 2); localStorage.setItem('shmot-fontsize', n); return n })}>−</button>
-          <span className="rv-flbl">{fontSize}</span>
-          <button className="rv-fbtn" onClick={() => setFontSize(s => { const n = Math.min(28, s + 2); localStorage.setItem('shmot-fontsize', n); return n })}>+</button>
+          <button className="rv-fbtn" aria-label="הקטנת גופן" onClick={() => setFontSize(s => { const n = Math.max(14, s - 2); lsSet('shmot-fontsize', n); return n })}>−</button>
+          <span className="rv-flbl" aria-live="polite">{fontSize}</span>
+          <button className="rv-fbtn" aria-label="הגדלת גופן" onClick={() => setFontSize(s => { const n = Math.min(28, s + 2); lsSet('shmot-fontsize', n); return n })}>+</button>
         </div>
-        <select className={`rv-lang-sel${transLang ? ' active' : ''}`} value={transLang || ''} onChange={e => { setTransLang(e.target.value || null); setExtTrans({}) }}>
+        <select aria-label="שפת התרגום" className={`rv-lang-sel${transLang ? ' active' : ''}`} value={transLang || ''} onChange={e => { setTransLang(e.target.value || null); setExtTrans({}) }}>
           <option value="">תרג׳</option>
           <option value="en">EN</option>
           <option value="ru">RU</option>
@@ -766,7 +760,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
         <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', padding: '.3rem 1rem', background: 'rgba(247,243,236,0.7)', borderBottom: '1px solid rgba(0,0,0,0.04)', flexShrink: 0 }}>
           <span style={{ fontSize: '.6rem', color: 'var(--text3)', fontWeight: 700 }}>מהירות:</span>
           {['slow', 'medium', 'fast'].map(s => (
-            <button key={s} className={`rv-speed-btn${scrollSpeed === s ? ' on' : ''}`} onClick={() => setScrollSpeed(s)}>
+            <button key={s} className={`rv-speed-btn${scrollSpeed === s ? ' on' : ''}`} aria-pressed={scrollSpeed === s} aria-label={{ slow: 'איטי', medium: 'בינוני', fast: 'מהיר' }[s]} onClick={() => setScrollSpeed(s)}>
               {s === 'slow' ? '🐢' : s === 'medium' ? '🚶' : '🏃'}
             </button>
           ))}
@@ -836,7 +830,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
             )
           })}
           {!loading && !error && mode === 'continuous' && verses.length > 0 && (
-            <div dir="rtl" style={{ fontFamily: "'Frank Ruhl Libre',serif", fontSize, lineHeight: 2, color: 'var(--text1)' }}>
+            <div dir="rtl" style={{ fontFamily: 'var(--font-torah)', fontSize, lineHeight: 2, color: 'var(--text1)' }}>
               {verses.map(v => {
                 const isStop = stopKey === v.key
                 const aliyahStart = aliyahStarts.find(a => a.key === v.key)
@@ -852,7 +846,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
                     <div id={`rv-${v.key}`} className={`rv-cont-verse${isStop ? ' is-stop' : ''}`}>
                       <span className="rv-cont-pin" style={{ fontSize: fontSize * 0.55, color: 'var(--text3)' }}>{toHebNum(v.verse)}</span>
                       <span style={{ flex: 1 }} dangerouslySetInnerHTML={{ __html: v.he }} />
-                      <button className={`rv-pin${isStop ? ' on' : ''}`} onClick={() => togglePin(v.key)} style={{ flexShrink: 0, alignSelf: 'center', fontSize: fontSize * 0.7 }}>📍</button>
+                      <button className={`rv-pin${isStop ? ' on' : ''}`} aria-label={isStop ? 'הסר סמנייה' : 'סמן עצירה כאן'} aria-pressed={isStop} onClick={() => togglePin(v.key)} style={{ flexShrink: 0, alignSelf: 'center', fontSize: fontSize * 0.7 }}>📍</button>
                     </div>
                   </Fragment>
                 )
@@ -904,12 +898,13 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
                         <span className="rv-chid-date">{c.date}</span>
                         <span className="rv-chid-text">{c.text}</span>
                       </div>
+                      <button className="rv-chid-del" aria-label="מחיקת החידוש" onClick={() => { if (confirm('למחוק את החידוש?')) onDeleteChiddush(name, c.id) }}>×</button>
                     </div>
                   ))}
                 </div>
               )
             })()}
-            <textarea ref={chidRef} className="rv-chid-input" value={chidText} onChange={e => setChidText(e.target.value)} placeholder="כתוב חידוש, שאלה או מחשבה חדשה..." rows={2} />
+            <textarea ref={chidRef} aria-label="חידוש או שאלה חדשים" className="rv-chid-input" value={chidText} onChange={e => setChidText(e.target.value)} placeholder="כתוב חידוש, שאלה או מחשבה חדשה..." rows={2} />
             <div className="rv-chid-footer">
               <button className="rv-chid-save" onClick={() => { if (chidText.trim()) { onAddChiddush(name, chidText.trim()); setChidText('') } }}>+ הוסף</button>
               <button className="rv-chid-cancel" onClick={() => { setShowChidInput(false); setChidText('') }}>סגור</button>
@@ -917,7 +912,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onBulk
           </motion.div>
         )}
       </AnimatePresence>
-      <motion.button className={`rv-chid-fab${showChidInput ? ' open' : ''}`} onClick={() => { setShowChidInput(v => !v); setTimeout(() => chidRef.current?.focus(), 120) }} whileTap={{ scale: 0.9 }}>
+      <motion.button className={`rv-chid-fab${showChidInput ? ' open' : ''}`} aria-label={showChidInput ? 'סגירת חידושים' : 'חידושים ושאלות'} aria-expanded={showChidInput} onClick={() => { setShowChidInput(v => !v); setTimeout(() => chidRef.current?.focus(), 120) }} whileTap={{ scale: 0.9 }}>
         {showChidInput ? '✕' : <>💡{((prog[name] || {}).chiddushim || []).length > 0 && <span className="rv-chid-badge">{((prog[name] || {}).chiddushim || []).length}</span>}</>}
       </motion.button>
     </motion.div>
@@ -945,9 +940,13 @@ function App() {
   const [filterMissing, setFilterMissing] = useState(false)
   const [readingView, setReadingView] = useState(null)
   const [showOnboard, setShowOnboard] = useState(false)
-  const saveTimer = useRef(null)
+  const [showAccount, setShowAccount] = useState(false)
+  const progRef = useRef({})        // המצב העדכני, לחישוב ערכים מוחלטים בעת לחיצה
+  const inFlight = useRef(0)        // כתיבות לענן שעוד לא הסתיימו
+  const pendingSnap = useRef(null)  // עדכון מהענן שהגיע בזמן כתיבה — מוחל כשהיא מסתיימת
+  const leaving = useRef(false)     // באמצע יציאה/מחיקה — לא לשמור עוד עדכונים מקומית
   const curYear = useRef(getHebrewYear()).current
-  const curParasha = useRef(detectParasha()).current
+  const curParshiot = useRef(detectParasha()).current
   const { missing } = globalStats(prog)
 
   // מחוות "חזור": סוגרת מסך/גיליון פתוח לפני יציאה מהאפליקציה
@@ -955,62 +954,151 @@ function App() {
     { open: !!selectedSefer, close: () => setSelectedSefer(null) },
     { open: !!sheet, close: () => setSheet(null) },
     { open: !!readingView, close: () => setReadingView(null) },
+    { open: showAccount, close: () => setShowAccount(false) },
     { open: showOnboard, close: () => setShowOnboard(false) },
   ])
 
+  // מסך הפתיחה: ציטוט מלא בפתיחה הראשונה של היום, אחר כך רק עד שהאפליקציה מוכנה
   useEffect(() => {
+    if (loading) return
     const el = document.getElementById('html-splash')
     if (!el) return
-    const t = setTimeout(() => { el.classList.add('sp-out'); setTimeout(() => el.remove(), 520) }, 5000)
+    const today = new Date().toDateString()
+    const firstToday = lsGet('shmot-splash-day') !== today
+    lsSet('shmot-splash-day', today)
+    const wait = Math.max(0, (firstToday ? 5000 : 1200) - performance.now())
+    const t = setTimeout(() => { el.classList.add('sp-out'); setTimeout(() => el.remove(), 520) }, wait)
     return () => clearTimeout(t)
-  }, [])
+  }, [loading])
+
+  // תפריט החשבון נסגר בלחיצה מחוץ לו
+  useEffect(() => {
+    if (!showAccount) return
+    const onDown = e => { if (!e.target.closest?.('.acct-wrap')) setShowAccount(false) }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [showAccount])
+
+  function setAll(r) { progRef.current = r; setProg(r) }
 
   useEffect(() => {
+    let unsub = () => {}, cancelled = false
     getRedirectResult(auth).catch(() => {}).finally(() => {
-      const unsub = onAuthStateChanged(auth, async u => {
+      if (cancelled) return
+      unsub = onAuthStateChanged(auth, u => {
         setUser(u)
         if (u) {
-          const r = await fbLoad(u.uid)
-          if (r !== null) setProg(r)
-          else { try { const l = localStorage.getItem('mikra-prog'); if (l) setProg(JSON.parse(l)) } catch {} }
           document.title = 'שמו״ת · ' + (u.displayName?.split(' ')[0] || '')
-          if (!localStorage.getItem('shmot-onboarded')) setShowOnboard(true)
-        } else { setProg({}); document.title = 'שניים מקרא ואחד תרגום' }
-        setLoading(false)
+          if (!lsGet('shmot-onboarded')) setShowOnboard(true)
+        } else {
+          setAll({}); document.title = 'שניים מקרא ואחד תרגום'; setLoading(false)
+        }
       })
-      return unsub
     })
+    return () => { cancelled = true; unsub() }
   }, [])
 
-  function doneOnboard() { localStorage.setItem('shmot-onboarded', '1'); setShowOnboard(false) }
+  // האזנה חיה למסמך המשתמש — שינוי ממכשיר אחר מגיע מיד, ולא נדרס בכתיבה הבאה
+  const uid = user?.uid
+  useEffect(() => {
+    if (!uid) return
+    const local = loadLocal(uid)
+    if (local) { setAll(local); setLoading(false) }
+    return onSnapshot(userDoc(uid), snap => {
+      setLoading(false)
+      if (leaving.current || auth.currentUser?.uid !== uid || snap.metadata.hasPendingWrites) return
+      const r = parseProg(snap.exists() ? snap.data() : null)
+      if (inFlight.current > 0) { pendingSnap.current = r; return }
+      setAll(r); saveLocal(uid, r)
+    }, e => {
+      console.error(e)
+      if (e.code === 'permission-denied') alert('⚠️ Firebase: אין הרשאה.')
+      setLoading(false)
+    })
+  }, [uid])
+
+  function doneOnboard() { lsSet('shmot-onboarded', '1'); setShowOnboard(false) }
 
   function doSignIn() {
     signInWithPopup(auth, provider).catch(e => { if (e.code === 'auth/popup-blocked') signInWithRedirect(auth, provider) })
   }
-  function doSignOut() { signOut(auth); setProg({}); setSheet(null) }
-
-  function persist(next) {
-    try { localStorage.setItem('mikra-prog', JSON.stringify(next)) } catch {}
-    if (user) { clearTimeout(saveTimer.current); saveTimer.current = setTimeout(() => fbSave(user.uid, next), 1200) }
+  function closeAll() { setShowAccount(false); setSheet(null); setReadingView(null); setSelectedSefer(null) }
+  async function doSignOut() {
+    const id = uid
+    closeAll()
+    leaving.current = true
+    await signOut(auth)
+    if (id) clearLocal(id)   // מכשיר משותף: לא להשאיר את ההתקדמות של המשתמש הקודם
+    leaving.current = false
   }
+  async function deleteAccount() {
+    if (!uid) return
+    if (!confirm('למחוק לצמיתות את החשבון ואת כל ההתקדמות, הסמניות והחידושים?\nלא ניתן לשחזר את הנתונים.')) return
+    const id = uid
+    closeAll()
+    leaving.current = true
+    try { await deleteDoc(userDoc(id)) }
+    catch (e) { console.error(e); leaving.current = false; alert('המחיקה נכשלה. בדוק את החיבור לאינטרנט ונסה שוב.'); return }
+    clearLocal(id)
+    try { localStorage.removeItem('shmot-onboarded') } catch {}
+    try { await deleteUser(auth.currentUser) }
+    catch (e) {
+      // מחיקת משתמש דורשת כניסה טרייה — מבקשים אימות מחדש, ואם לא הצליח פשוט מנתקים
+      try {
+        if (e.code !== 'auth/requires-recent-login') throw e
+        await reauthenticateWithPopup(auth.currentUser, provider)
+        await deleteUser(auth.currentUser)
+      } catch { await signOut(auth).catch(() => {}) }
+    }
+    clearLocal(id)
+    leaving.current = false
+    alert('הנתונים שלך נמחקו.')
+  }
+
+  /* כל שינוי: מוחל מקומית מיד, ונשלח לענן כפונקציה שמוחלת שם על המצב העדכני */
+  function apply(mutate) {
+    if (!uid || leaving.current) return
+    const id = uid
+    const next = mutate(progRef.current)
+    setAll(next); saveLocal(id, next)
+    inFlight.current++
+    fbMutate(id, mutate, next).finally(() => {
+      if (--inFlight.current > 0 || !pendingSnap.current) return
+      const r = pendingSnap.current; pendingSnap.current = null
+      if (auth.currentUser?.uid === id) { setAll(r); saveLocal(id, r) }
+    })
+  }
+  const ensure = (n, parasha, num) => { if (!n[parasha]) n[parasha] = {}; if (num && !n[parasha][num]) n[parasha][num] = {} }
   function toggleAliya(parasha, num, field) {
-    setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]) n[parasha] = {}; if (!n[parasha][num]) n[parasha][num] = {}; n[parasha][num][field] = !n[parasha][num][field]; persist(n); return n })
+    const val = !progRef.current[parasha]?.[num]?.[field]   // ערך מוחלט — לא "הפוך" — כדי שיתנהג נכון גם על מצב הענן
+    apply(edit(n => { ensure(n, parasha, num); n[parasha][num][field] = val }))
   }
   function bulkMark(parasha, field, value) {
-    setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]) n[parasha] = {}; if (field === null) { n[parasha] = {} } else { for (let i = 1; i <= 7; i++) { if (!n[parasha][i]) n[parasha][i] = {}; n[parasha][i][field] = value } } persist(n); return n })
+    apply(edit(n => {
+      ensure(n, parasha)
+      // "נקה" מוחק רק את סימוני העליות — לא חידושים ולא סמניות
+      for (let i = 1; i <= 7; i++) {
+        if (field === null) delete n[parasha][i]
+        else { if (!n[parasha][i]) n[parasha][i] = {}; n[parasha][i][field] = value }
+      }
+    }))
   }
   function updateStop(parasha, num, val) {
-    setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]) n[parasha] = {}; if (!n[parasha][num]) n[parasha][num] = {}; if (val) n[parasha][num].stop = val; else delete n[parasha][num].stop; persist(n); return n })
+    apply(edit(n => { ensure(n, parasha, num); if (val) n[parasha][num].stop = val; else delete n[parasha][num].stop }))
   }
   function addChiddush(parasha, text) {
-    const date = new Date().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric', year: '2-digit' })
-    setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]) n[parasha] = {}; if (!n[parasha].chiddushim) n[parasha].chiddushim = []; n[parasha].chiddushim.unshift({ id: Date.now(), text, date }); persist(n); return n })
+    const item = { id: Date.now(), text, date: new Date().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric', year: '2-digit' }) }
+    apply(edit(n => { ensure(n, parasha); if (!n[parasha].chiddushim) n[parasha].chiddushim = []; if (!n[parasha].chiddushim.some(c => c.id === item.id)) n[parasha].chiddushim.unshift(item) }))
   }
   function deleteChiddush(parasha, id) {
-    setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]?.chiddushim) return prev; n[parasha].chiddushim = n[parasha].chiddushim.filter(c => c.id !== id); persist(n); return n })
+    apply(edit(n => { if (n[parasha]?.chiddushim) n[parasha].chiddushim = n[parasha].chiddushim.filter(c => c.id !== id) }))
   }
   function updateReadingStop(parasha, key) {
-    setProg(prev => { const n = JSON.parse(JSON.stringify(prev)); if (!n[parasha]) n[parasha] = {}; if (key) n[parasha].readingStop = key; else delete n[parasha].readingStop; persist(n); return n })
+    apply(edit(n => { ensure(n, parasha); if (key) n[parasha].readingStop = key; else delete n[parasha].readingStop }))
+  }
+  function updateLastPos(parasha, key) {
+    if (!key || progRef.current[parasha]?.lastPos === key) return
+    apply(edit(n => { ensure(n, parasha); n[parasha].lastPos = key }))
   }
   function openReadingView(name, seferId, theme, skipStop = false) { setSheet(null); setReadingView({ name, seferId, theme, skipStop }) }
 
@@ -1048,10 +1136,23 @@ function App() {
         </div>
         <div className="bar-end">
           <span className="badge-year">{yearStr(curYear)}</span>
-          <motion.button className={`btn-missing${filterMissing ? ' on' : ''}`} onClick={() => setFilterMissing(v => !v)} whileTap={{ scale: 0.93 }}>⚠ {missing}</motion.button>
-          {user.photoURL && <img className="user-av" src={user.photoURL} alt="" />}
+          <motion.button className={`btn-missing${filterMissing ? ' on' : ''}`} aria-pressed={filterMissing} aria-label={`${missing} פרשות עם חוסרים — הצג רק אותן`} onClick={() => setFilterMissing(v => !v)} whileTap={{ scale: 0.93 }}>⚠ {missing}</motion.button>
           <a className="btn-contact" href="https://forms.gle/QVmpXvtWo9TtJGk9A" target="_blank" rel="noopener">✉ צור קשר</a>
-          <button className="btn-icon" onClick={doSignOut} title="יציאה">↩</button>
+          <div className="acct-wrap">
+            <button className="acct-btn" onClick={() => setShowAccount(v => !v)} aria-label="חשבון" aria-haspopup="menu" aria-expanded={showAccount}>
+              {user.photoURL ? <img className="user-av" src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span aria-hidden="true">👤</span>}
+            </button>
+            <AnimatePresence>
+              {showAccount && (
+                <motion.div className="acct-menu" role="menu" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}>
+                    <div className="acct-who">{user.displayName || ''}<span>{user.email || ''}</span></div>
+                    <button role="menuitem" className="acct-item" onClick={doSignOut}>↩ יציאה מהחשבון</button>
+                    <a role="menuitem" className="acct-item" href="/privacy.html" target="_blank" rel="noopener">🔒 מדיניות פרטיות</a>
+                    <button role="menuitem" className="acct-item danger" onClick={deleteAccount}>🗑 מחיקת החשבון והנתונים</button>
+                  </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </header>
       <StatsStrip prog={prog} />
@@ -1062,18 +1163,18 @@ function App() {
               {filterMissing && (
                 <motion.div className="filter-notice" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                   <span>מציג פרשות עם חוסרים · {missing} פרשות</span>
-                  <button className="btn-icon" style={{ color: '#b5524e', width: 22, height: 22, fontSize: '.78rem' }} onClick={() => setFilterMissing(false)}>✕</button>
+                  <button className="btn-icon" style={{ color: '#b5524e', width: 22, height: 22, fontSize: '.78rem' }} aria-label="הצג את כל הפרשות" onClick={() => setFilterMissing(false)}>✕</button>
                 </motion.div>
               )}
             </AnimatePresence>
             <ConceptCard />
             {(() => {
-              const resumeP = (curParasha && (prog[curParasha] || {}).readingStop) ? curParasha : Object.keys(prog).find(p => prog[p] && prog[p].readingStop)
-              const showRow = curParasha || resumeP
+              const resumeP = (curParshiot || []).find(p => resumeKey(prog[p])) || Object.keys(prog).find(p => resumeKey(prog[p]))
+              const showRow = curParshiot || resumeP
               if (!showRow) return null
               return (
                 <div className="quick-row">
-                  {curParasha && <WeekCard parasha={curParasha} onOpen={openReadingView} />}
+                  {curParshiot && <WeekCard parshiot={curParshiot} onOpen={openReadingView} />}
                   {resumeP && <ResumeCard parasha={resumeP} prog={prog} onOpen={openReadingView} />}
                 </div>
               )
@@ -1085,17 +1186,17 @@ function App() {
             </div>
           </motion.div>
         ) : (
-          <ParshotView key={selectedSefer.id} sefer={selectedSefer} prog={prog} currentParasha={curParasha} filterMissing={filterMissing}
+          <ParshotView key={selectedSefer.id} sefer={selectedSefer} prog={prog} currentParshiot={curParshiot} filterMissing={filterMissing}
             onOpen={(name, theme, seferId) => openReadingView(name, seferId, theme)}
             onOpenSheet={(name, theme, seferId) => setSheet({ name, theme, seferId })}
             onBack={() => setSelectedSefer(null)} />
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {sheet && <BottomSheet key="sheet" name={sheet.name} seferId={sheet.seferId} theme={sheet.theme} prog={prog} onClose={() => setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop} onOpenRead={openReadingView} onAddChiddush={addChiddush} onDeleteChiddush={deleteChiddush} />}
+        {sheet && <BottomSheet key="sheet" name={sheet.name} seferId={sheet.seferId} theme={sheet.theme} prog={prog} onClose={() => setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop} onOpenRead={openReadingView} />}
       </AnimatePresence>
       <AnimatePresence>
-        {readingView && <ReadingView key="rv" name={readingView.name} seferId={readingView.seferId} theme={readingView.theme} prog={prog} onClose={() => setReadingView(null)} onUpdateStop={updateReadingStop} onBulkMark={bulkMark} skipStop={readingView.skipStop} onAddChiddush={addChiddush} />}
+        {readingView && <ReadingView key="rv" name={readingView.name} seferId={readingView.seferId} theme={readingView.theme} prog={prog} onClose={() => setReadingView(null)} onUpdateStop={updateReadingStop} onUpdateLastPos={updateLastPos} onBulkMark={bulkMark} skipStop={readingView.skipStop} onAddChiddush={addChiddush} onDeleteChiddush={deleteChiddush} />}
       </AnimatePresence>
       <AnimatePresence>
         {showOnboard && <OnboardingTooltip key="onboard" onDone={doneOnboard} />}
@@ -1104,4 +1205,6 @@ function App() {
   )
 }
 
-createRoot(document.getElementById('root')).render(<App />)
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {})
+
+createRoot(document.getElementById('root')).render(<MotionConfig reducedMotion="user"><App /></MotionConfig>)
