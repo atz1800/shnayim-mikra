@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "app.web.shnayim_mikra_app.twa",
-        "sha256_cert_fingerprints": ["31:7C:FF:3C:37:69:17:7D:36:14:B5:4A:35:6D:18:8F:24:04:56:0C:96:8D:96:70:68:E9:5E:6B:BF:E0:3F:A9"]
-      }
-    }]
