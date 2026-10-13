@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion'
 import { HebrewCalendar, HDate, gematriya } from '@hebcal/core'
-import { ALIYA_LENGTHS } from './data/aliyaLengths'
+import { ALIYA_LENGTHS, LEYNING } from './data/aliyaLengths'
 import DOMPurify from 'dompurify'
 import { initializeApp } from 'firebase/app'
 import {
@@ -91,7 +91,7 @@ const SEFARIA = {
   'במדבר':'Parashat_Bamidbar','נשא':'Parashat_Nasso','בהעלותך':"Parashat_Beha'alotcha",'שלח':'Parashat_Shelach','קרח':'Parashat_Korach','חוקת':'Parashat_Chukat','בלק':'Parashat_Balak','פינחס':'Parashat_Pinchas','מטות':'Parashat_Matot','מסעי':'Parashat_Masei',
   'דברים':'Parashat_Devarim','ואתחנן':'Parashat_Vaetchanan','עקב':'Parashat_Eikev','ראה':"Parashat_Re'eh",'שופטים':'Parashat_Shoftim','כי תצא':'Parashat_Ki_Teitzei','כי תבוא':'Parashat_Ki_Tavo','נצבים':'Parashat_Nitzavim','וילך':'Parashat_Vayeilech','האזינו':'Parashat_Haazinu','וזאת הברכה':'Deuteronomy.33.1-34.12',
 }
-const sefText = n => { const s = SEFARIA[n]; return s ? `https://www.sefaria.org.il/${s}?lang=he&aliyot=1` : null }
+const sefText = n => { const s = sefariaRef(n); return s ? `https://www.sefaria.org.il/${s}?lang=he&aliyot=1` : null }
 
 const ONKELOS_BOOK = { bereshit: 'Genesis', shemot: 'Exodus', vayikra: 'Leviticus', bamidbar: 'Numbers', devarim: 'Deuteronomy' }
 const RASHI_BOOK   = { bereshit: 'Genesis', shemot: 'Exodus', vayikra: 'Leviticus', bamidbar: 'Numbers', devarim: 'Deuteronomy' }
@@ -148,6 +148,19 @@ function detectParasha() {
 const _HE2EN = Object.fromEntries(Object.entries(_EN2HE).filter(([en]) => en !== 'Shemini').map(([en, he]) => [he, en]))
 /* מספר הפסוקים בעלייה (לבורר פסוק העצירה); 50 אם אין מידע */
 function aliyaVerseCount(name, num) { return ALIYA_LENGTHS[_HE2EN[name]]?.[num - 1] || 50 }
+
+/* פרשיות מחוברות נקראות במסך אחד בשם "נצבים־וילך"; ההתקדמות (עליות, חידושים) נשמרת לכל פרשה בנפרד */
+const JOIN = '־'
+const partsOf = name => name.split(JOIN)
+const leyningOf = name => LEYNING[partsOf(name).map(p => _HE2EN[p]).join('-')] || null
+/* הפניה לספריא: לפרשה בודדת לפי השם, לפרשיות מחוברות לפי טווח הפסוקים */
+function sefariaRef(name) {
+  if (SEFARIA[name]) return SEFARIA[name]
+  const l = leyningOf(name)
+  return l ? `${l.book}.${l.start.replace(':', '.')}-${l.end.replace(':', '.')}` : null
+}
+/* "פרק:פסוק" → מספר להשוואה */
+const verseOrd = key => { const [c, v] = String(key).split(':').map(Number); return c * 1000 + v }
 
 function toHebNum(n) {
   if (n === 15) return 'טו'; if (n === 16) return 'טז'
@@ -307,17 +320,19 @@ function WeekCard({ parshiot, onOpen }) {
   if (!sefer) return null
   const anim = { initial: { opacity: 0, y: -12 }, animate: { opacity: 1, y: 0 }, transition: { type: 'spring', stiffness: 360, damping: 30 } }
   if (parshiot.length > 1) {
-    // פרשיות מחוברות — כל אחת נפתחת בנפרד
+    // פרשיות מחוברות — הכרטיס פותח את שתיהן ברצף; הכפתורים פותחים כל אחת לבד
+    const open = () => onOpen(parshiot.join(JOIN), sefer.id, sefer.theme, true)
     return (
-      <motion.div className={`week-card ${sefer.theme}`} style={{ cursor: 'default' }} {...anim}>
+      <motion.div className={`week-card ${sefer.theme}`} role="button" tabIndex={0} onClick={open} onKeyDown={onKeyActivate(open)} whileTap={{ scale: 0.97 }} {...anim}>
         <div className="qc-icon" aria-hidden="true">📅</div>
         <div className="qc-info">
-          <div className="qc-label">פרשת השבוע</div>
-          <div className="qc-main">{parshiot.join('־')}</div>
+          <div className="qc-label">פרשות השבוע · מחוברות</div>
+          <div className="qc-main">{parshiot.join(JOIN)}</div>
           <div className="qc-chips">
-            {parshiot.map(p => <button key={p} className="qc-chip" onClick={() => onOpen(p, sefer.id, sefer.theme, true)}>📖 {p}</button>)}
+            {parshiot.map(p => <button key={p} className="qc-chip" onClick={e => { e.stopPropagation(); onOpen(p, sefer.id, sefer.theme, true) }} onKeyDown={e => e.stopPropagation()}>📖 {p} לבד</button>)}
           </div>
         </div>
+        <div className="qc-arrow" aria-hidden="true">‹</div>
       </motion.div>
     )
   }
@@ -336,7 +351,7 @@ function WeekCard({ parshiot, onOpen }) {
 function ResumeCard({ parasha, prog, onOpen }) {
   const sk = resumeKey(prog[parasha])
   if (!sk) return null
-  const sefer = SFARIM.find(s => s.parshiot.includes(parasha))
+  const sefer = SFARIM.find(s => s.parshiot.includes(partsOf(parasha)[0]))
   if (!sefer) return null
   const [c, v] = sk.split(':').map(Number)
   const open = () => onOpen(parasha, sefer.id, sefer.theme)
@@ -565,6 +580,15 @@ function VerseBlock({ v, mode, fontSize, isStop, onPin, extTrans, transLang }) {
 }
 
 /* ═══ READING VIEW ═══════════════════════ */
+function PartDivider({ from, to }) {
+  return (
+    <div className="rv-parasha-divider">
+      <div className="rv-parasha-end"><span className="rv-pe-line" />✦ סוף פרשת {from} ✦<span className="rv-pe-line" /></div>
+      <div className="rv-parasha-header">פרשת {to}</div>
+    </div>
+  )
+}
+
 function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpdateLastPos, onBulkMark, skipStop, onAddChiddush, onDeleteChiddush }) {
   const [mode, setMode] = useState('shnayim')
   const [fontSize, setFontSize] = useState(() => { const n = parseInt(lsGet('shmot-fontsize'), 10); return n >= 14 && n <= 28 ? n : 18 })
@@ -586,6 +610,9 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
   const bodyRef = useRef(null)
   const timerRef = useRef(null)
   const posRef = useRef(null)
+  const parts = partsOf(name)                                // פרשיות מחוברות: שתיים, אחרת אחת
+  const part2Start = parts.length > 1 ? leyningOf(parts[1])?.start : null
+  const partAt = key => (part2Start && key && verseOrd(key) >= verseOrd(part2Start)) ? parts[1] : parts[0]
   const stopKey = (prog[name] || {}).readingStop || null   // סמנייה ידנית (📍)
   const resumeAt = resumeKey(prog[name])                     // סמנייה ידנית, ואם אין — המקום האחרון
   // המקום האחרון נשמר בכל יציאה (כפתור, מחוות חזור, מעבר לרקע) — בלי לגעת בסמנייה הידנית
@@ -660,7 +687,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
   useEffect(() => {
     if (!transLang) { setExtTrans({}); return }
     if (!verses.length) return
-    const ref = SEFARIA[name]; if (!ref) return
+    const ref = sefariaRef(name); if (!ref) return
     setTransLoading(true)
     const TRANS_VEN = {
       en: '',
@@ -685,7 +712,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
   async function load() {
     setLoading(true); setError(null); setVerses([]); setAliyahStarts([])
     try {
-      const ref = SEFARIA[name]
+      const ref = sefariaRef(name)
       if (!ref) throw new Error('לא נמצא מיפוי לפרשה זו')
       const heRes = await fetch(`https://www.sefaria.org/api/texts/${ref}?aliyot=1`)
       if (!heRes.ok) throw new Error('שגיאת רשת מספריא')
@@ -695,25 +722,14 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
         const tgRef = buildOnkelosRef(heData.ref, seferId)
         if (tgRef) { const r = await fetch(`https://www.sefaria.org/api/texts/${tgRef}?lang=he`); if (r.ok) tgData = await r.json() }
       } catch {}
-      const list = buildVerseList(heData, tgData, null)
+      // ספריא מחזירה פרקים שלמים — גם את סוף הפרשה הקודמת ותחילת הבאה. חותכים לגבולות הפרשה
+      const l = leyningOf(name)
+      const [s, e] = l ? [l.start, l.end] : [(heData.sections || []).join(':'), (heData.toSections || []).join(':')]
+      const list = buildVerseList(heData, tgData, null).filter(v => verseOrd(v.key) >= verseOrd(s) && verseOrd(v.key) <= verseOrd(e))
       if (!list.length) throw new Error('לא התקבל טקסט')
       setVerses(list)
-      try {
-        const alts = heData.alts
-        const startChap = (heData.sections && heData.sections[0]) || 1
-        if (Array.isArray(alts) && alts.length > 0) {
-          const starts = []
-          alts.forEach((chapArr, ci) => {
-            if (!Array.isArray(chapArr)) return
-            chapArr.forEach((entry, vi) => {
-              if (entry !== null && entry !== undefined && typeof entry === 'object' && (entry.he || entry.en)) {
-                starts.push({ num: starts.length + 1, key: `${startChap + ci}:${vi + 1}` })
-              }
-            })
-          })
-          if (starts.length > 0) setAliyahStarts(starts)
-        }
-      } catch {}
+      // גבולות העליות מלוח הקריאה (hebcal) — הסימון של ספריא כולל גם עליות של הפרשה הסמוכה, ובפרשה של פרק אחד (וילך, האזינו) אינו מגיע כלל
+      if (l) setAliyahStarts(l.aliyot.map((key, i) => ({ num: i + 1, key })))
     } catch (e) {
       setError(e.message || 'שגיאה בטעינה')
     } finally {
@@ -721,6 +737,8 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
     }
   }
 
+  // חידושים של כל הפרשיות שבמסך; חידוש חדש נשמר בפרשה שבה נמצא הקורא
+  const chidList = parts.flatMap(n => ((prog[n] || {}).chiddushim || []).map(c => ({ ...c, parasha: n })))
   function togglePin(key) { onUpdateStop(name, stopKey === key ? '' : key) }
   function jumpToStop() { const el = document.getElementById(`rv-${resumeAt}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
   function handleClose() { onClose() }   // המיקום נשמר ב-cleanup של ה-effect למעלה
@@ -742,7 +760,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
         <motion.button className={`rv-mode${mode === 'rashi' ? ' on' : ''}`} aria-pressed={mode === 'rashi'} onClick={() => setMode('rashi')} whileTap={{ scale: 0.93 }}>רש״י</motion.button>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', flexShrink: 0 }}>
-          <span style={{ fontSize: '.58rem', color: 'var(--text3)', fontWeight: 700 }}>גודל</span>
+          <span style={{ fontSize: '.62rem', color: 'var(--text3)', fontWeight: 700 }}>גודל</span>
           <button className="rv-fbtn" aria-label="הקטנת גופן" onClick={() => setFontSize(s => { const n = Math.max(14, s - 2); lsSet('shmot-fontsize', n); return n })}>−</button>
           <span className="rv-flbl" aria-live="polite">{fontSize}</span>
           <button className="rv-fbtn" aria-label="הגדלת גופן" onClick={() => setFontSize(s => { const n = Math.min(28, s + 2); lsSet('shmot-fontsize', n); return n })}>+</button>
@@ -818,6 +836,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
             const aliyahStart = aliyahStarts.find(a => a.key === v.key)
             return (
               <Fragment key={v.key}>
+                {v.key === part2Start && <PartDivider from={parts[0]} to={parts[1]} />}
                 {aliyahStart && (
                   <div className="rv-aliyah-header">
                     <div className="rv-aliyah-line" />
@@ -836,6 +855,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
                 const aliyahStart = aliyahStarts.find(a => a.key === v.key)
                 return (
                   <Fragment key={v.key}>
+                    {v.key === part2Start && <PartDivider from={parts[0]} to={parts[1]} />}
                     {aliyahStart && (
                       <div className="rv-aliyah-header">
                         <div className="rv-aliyah-line" />
@@ -854,8 +874,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
             </div>
           )}
           {!loading && !error && verses.length > 0 && (() => {
-            const p = prog[name] || {}
-            const allDone = f => [1,2,3,4,5,6,7].every(i => p[i]?.[f])
+            const allDone = f => parts.every(n => [1,2,3,4,5,6,7].every(i => prog[n]?.[i]?.[f]))
             const showTg = mode === 'paired' || !!transLang
             let label, field, isDone
             if (showTg) { isDone = allDone('tg'); field = 'tg'; label = isDone ? '✓ תרגום' : 'סיימתי תרגום' }
@@ -864,7 +883,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
               else if (!allDone('r2')) { isDone = false; field = 'r2'; label = 'סיימתי פעם ב׳' }
               else { isDone = true; field = 'r2'; label = '✓ שניים מקרא' }
             }
-            return <button className={`rv-seiamti${isDone ? ' done' : ''}`} onClick={() => { if (!isDone && onBulkMark) onBulkMark(name, field, true) }}>{label}</button>
+            return <button className={`rv-seiamti${isDone ? ' done' : ''}`} onClick={() => { if (!isDone && onBulkMark) parts.forEach(n => onBulkMark(n, field, true)) }}>{label}</button>
           })()}
           {!loading && !error && verses.length > 0 && <div className="rv-credit">מקור הטקסט: <a href="https://www.sefaria.org" target="_blank" rel="noopener">ספריא</a> · CC BY-NC</div>}
         </div>
@@ -876,7 +895,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
             <div className="rv-chid-panel-head">
               <span className="rv-chid-panel-title">💡 חידושים ושאלות — {name}</span>
               {(() => {
-                const list = (prog[name] || {}).chiddushim || []
+                const list = chidList
                 if (!list.length) return null
                 function shareAll() {
                   const txt = list.map(c => `• ${c.text}  (${c.date})`).join('\n')
@@ -888,17 +907,17 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
               })()}
             </div>
             {(() => {
-              const list = (prog[name] || {}).chiddushim || []
+              const list = chidList
               if (!list.length) return <div className="rv-chid-empty">עדיין אין חידושים לפרשה זו</div>
               return (
                 <div className="rv-chid-list">
                   {list.map(c => (
                     <div key={c.id} className="rv-chid-item">
                       <div className="rv-chid-item-body">
-                        <span className="rv-chid-date">{c.date}</span>
+                        <span className="rv-chid-date">{c.date}{parts.length > 1 && ` · ${c.parasha}`}</span>
                         <span className="rv-chid-text">{c.text}</span>
                       </div>
-                      <button className="rv-chid-del" aria-label="מחיקת החידוש" onClick={() => { if (confirm('למחוק את החידוש?')) onDeleteChiddush(name, c.id) }}>×</button>
+                      <button className="rv-chid-del" aria-label="מחיקת החידוש" onClick={() => { if (confirm('למחוק את החידוש?')) onDeleteChiddush(c.parasha, c.id) }}>×</button>
                     </div>
                   ))}
                 </div>
@@ -906,14 +925,14 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
             })()}
             <textarea ref={chidRef} aria-label="חידוש או שאלה חדשים" className="rv-chid-input" value={chidText} onChange={e => setChidText(e.target.value)} placeholder="כתוב חידוש, שאלה או מחשבה חדשה..." rows={2} />
             <div className="rv-chid-footer">
-              <button className="rv-chid-save" onClick={() => { if (chidText.trim()) { onAddChiddush(name, chidText.trim()); setChidText('') } }}>+ הוסף</button>
+              <button className="rv-chid-save" onClick={() => { if (chidText.trim()) { onAddChiddush(partAt(posRef.current), chidText.trim()); setChidText('') } }}>+ הוסף</button>
               <button className="rv-chid-cancel" onClick={() => { setShowChidInput(false); setChidText('') }}>סגור</button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
       <motion.button className={`rv-chid-fab${showChidInput ? ' open' : ''}`} aria-label={showChidInput ? 'סגירת חידושים' : 'חידושים ושאלות'} aria-expanded={showChidInput} onClick={() => { setShowChidInput(v => !v); setTimeout(() => chidRef.current?.focus(), 120) }} whileTap={{ scale: 0.9 }}>
-        {showChidInput ? '✕' : <>💡{((prog[name] || {}).chiddushim || []).length > 0 && <span className="rv-chid-badge">{((prog[name] || {}).chiddushim || []).length}</span>}</>}
+        {showChidInput ? '✕' : <>💡{chidList.length > 0 && <span className="rv-chid-badge">{chidList.length}</span>}</>}
       </motion.button>
     </motion.div>
   )
@@ -1169,7 +1188,8 @@ function App() {
             </AnimatePresence>
             <ConceptCard />
             {(() => {
-              const resumeP = (curParshiot || []).find(p => resumeKey(prog[p])) || Object.keys(prog).find(p => resumeKey(prog[p]))
+              const weekNames = curParshiot ? (curParshiot.length > 1 ? [curParshiot.join(JOIN), ...curParshiot] : curParshiot) : []
+              const resumeP = weekNames.find(p => resumeKey(prog[p])) || Object.keys(prog).find(p => resumeKey(prog[p]))
               const showRow = curParshiot || resumeP
               if (!showRow) return null
               return (
