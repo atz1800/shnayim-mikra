@@ -609,7 +609,7 @@ function PartDivider({ from, to }) {
   )
 }
 
-function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpdateLastPos, onBulkMark, skipStop, onAddChiddush, onDeleteChiddush }) {
+function ReadingView({ name, seferId, theme, prog, archive = {}, onClose, onUpdateStop, onUpdateLastPos, onBulkMark, skipStop, onAddChiddush, onDeleteChiddush }) {
   const [mode, setMode] = useState('shnayim')
   const [fontSize, setFontSize] = useState(() => { const n = parseInt(lsGet('shmot-fontsize'), 10); return n >= 14 && n <= 28 ? n : 18 })
   const [loading, setLoading] = useState(true)
@@ -759,6 +759,9 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
 
   // חידושים של כל הפרשיות שבמסך; חידוש חדש נשמר בפרשה שבה נמצא הקורא
   const chidList = parts.flatMap(n => ((prog[n] || {}).chiddushim || []).map(c => ({ ...c, parasha: n })))
+  // חידושים משנים קודמות — לעיון בלבד, מהשנה הקרובה לרחוקה
+  const pastChid = Object.keys(archive).map(Number).sort((a, b) => b - a)
+    .flatMap(y => parts.flatMap(n => ((archive[y][n] || {}).chiddushim || []).map(c => ({ ...c, parasha: n, year: y }))))
   function togglePin(key) { onUpdateStop(name, stopKey === key ? '' : key) }
   function jumpToStop() { const el = document.getElementById(`rv-${resumeAt}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }) }
   function handleClose() { onClose() }   // המיקום נשמר ב-cleanup של ה-effect למעלה
@@ -928,9 +931,10 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
             </div>
             {(() => {
               const list = chidList
-              if (!list.length) return <div className="rv-chid-empty">עדיין אין חידושים לפרשה זו</div>
+              if (!list.length && !pastChid.length) return <div className="rv-chid-empty">עדיין אין חידושים לפרשה זו</div>
               return (
                 <div className="rv-chid-list">
+                  {!list.length && <div className="rv-chid-empty">עדיין אין חידושים השנה</div>}
                   {list.map(c => (
                     <div key={c.id} className="rv-chid-item">
                       <div className="rv-chid-item-body">
@@ -938,6 +942,15 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
                         <span className="rv-chid-text">{c.text}</span>
                       </div>
                       <button className="rv-chid-del" aria-label="מחיקת החידוש" onClick={() => { if (confirm('למחוק את החידוש?')) onDeleteChiddush(c.parasha, c.id) }}>×</button>
+                    </div>
+                  ))}
+                  {pastChid.length > 0 && <div className="rv-chid-past-head">משנים קודמות</div>}
+                  {pastChid.map(c => (
+                    <div key={`${c.year}-${c.id}`} className="rv-chid-item past">
+                      <div className="rv-chid-item-body">
+                        <span className="rv-chid-date">{yearStr(c.year)} · {c.date}{parts.length > 1 && ` · ${c.parasha}`}</span>
+                        <span className="rv-chid-text">{c.text}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -952,7 +965,7 @@ function ReadingView({ name, seferId, theme, prog, onClose, onUpdateStop, onUpda
         )}
       </AnimatePresence>
       <motion.button className={`rv-chid-fab${showChidInput ? ' open' : ''}`} aria-label={showChidInput ? 'סגירת חידושים' : 'חידושים ושאלות'} aria-expanded={showChidInput} onClick={() => { setShowChidInput(v => !v); setTimeout(() => chidRef.current?.focus(), 120) }} whileTap={{ scale: 0.9 }}>
-        {showChidInput ? '✕' : <>💡{chidList.length > 0 && <span className="rv-chid-badge">{chidList.length}</span>}</>}
+        {showChidInput ? '✕' : <>💡{chidList.length + pastChid.length > 0 && <span className="rv-chid-badge">{chidList.length + pastChid.length}</span>}</>}
       </motion.button>
     </motion.div>
   )
@@ -987,6 +1000,7 @@ function App() {
   const curYear = useRef(getHebrewYear()).current
   const [year, setYear] = useState(curYear)      // השנה שמוצגת ומסומנת
   const [years, setYears] = useState([])         // השנים שיש להן נתונים בענן
+  const [archive, setArchive] = useState({})     // ההתקדמות של השנים שלפני השנה המוצגת — בשביל חידושים קודמים
   const yearRef = useRef(year)
   yearRef.current = year
   const isPast = year !== curYear
@@ -1047,6 +1061,7 @@ function App() {
   useEffect(() => {
     if (!uid) return
     pendingSnap.current = null
+    setArchive({})
     const local = loadLocal(uid, year)
     setAll(local || {})
     if (local) setLoading(false)
@@ -1054,7 +1069,9 @@ function App() {
       setLoading(false)
       if (leaving.current || auth.currentUser?.uid !== uid || snap.metadata.hasPendingWrites) return
       const data = snap.exists() ? snap.data() : null
-      setYears(yearsIn(data))
+      const ys = yearsIn(data)
+      setYears(ys)
+      setArchive(Object.fromEntries(ys.filter(y => y < year).map(y => [y, parseProg(data, y)])))
       const r = parseProg(data, year)
       if (inFlight.current > 0) { pendingSnap.current = r; return }
       setAll(r); saveLocal(uid, year, r)
@@ -1260,7 +1277,7 @@ function App() {
         {sheet && <BottomSheet key="sheet" name={sheet.name} seferId={sheet.seferId} theme={sheet.theme} prog={prog} onClose={() => setSheet(null)} onToggle={toggleAliya} onBulk={bulkMark} onStop={updateStop} onOpenRead={openReadingView} />}
       </AnimatePresence>
       <AnimatePresence>
-        {readingView && <ReadingView key="rv" name={readingView.name} seferId={readingView.seferId} theme={readingView.theme} prog={prog} onClose={() => setReadingView(null)} onUpdateStop={updateReadingStop} onUpdateLastPos={updateLastPos} onBulkMark={bulkMark} skipStop={readingView.skipStop} onAddChiddush={addChiddush} onDeleteChiddush={deleteChiddush} />}
+        {readingView && <ReadingView key="rv" name={readingView.name} seferId={readingView.seferId} theme={readingView.theme} prog={prog} archive={archive} onClose={() => setReadingView(null)} onUpdateStop={updateReadingStop} onUpdateLastPos={updateLastPos} onBulkMark={bulkMark} skipStop={readingView.skipStop} onAddChiddush={addChiddush} onDeleteChiddush={deleteChiddush} />}
       </AnimatePresence>
       <AnimatePresence>
         {showOnboard && <OnboardingTooltip key="onboard" onDone={doneOnboard} />}
