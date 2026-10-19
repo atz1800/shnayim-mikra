@@ -1,3 +1,7 @@
+/* Ezra SIL (SIL OFL 1.1, רישיון ב-fonts/EzraSIL-LICENSE.txt) — ממקם מתג ליד צירה/סגול ולא בין הנקודות,
+   ומסדר טעמים צפופים. ב-Noto Serif Hebrew צירה+מתג (תֹאכֵֽלוּ) נראה כמו קמץ */
+@font-face{font-family:'Ezra SIL';src:url('./fonts/EzraSIL.woff2') format('woff2');font-display:swap;}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent;overflow-y:auto;}
 html,body{height:auto;}
@@ -25,8 +29,8 @@ a{color:inherit;text-decoration:none;}
   --ease-out:cubic-bezier(0.16,1,0.3,1);
   --r-sm:10px;--r-md:16px;--r-lg:22px;--r-xl:28px;
   /* ל-Frank Ruhl Libre אין גליפים לטעמים (U+0591-U+05AF), כל טעם הופך לריבוע
-     רחב ומזיז את הניקוד. Noto Serif Hebrew מכסה את כל הטעמים — לכל טקסט מנוקד/מוטעם. */
-  --font-torah:'Noto Serif Hebrew','Frank Ruhl Libre',serif;
+     רחב ומזיז את הניקוד. Ezra SIL מכסה את כל הטעמים וממקם אותם נכון; Noto — גיבוי עד שהגופן נטען. */
+  --font-torah:'Ezra SIL','Noto Serif Hebrew','Frank Ruhl Libre',serif;
 }
 
 :focus-visible{outline:2px solid #3f6fa6;outline-offset:2px;border-radius:6px;}
