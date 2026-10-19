@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion'
-import { HebrewCalendar, HDate, gematriya } from '@hebcal/core'
+import { HebrewCalendar, HDate, gematriya, months } from '@hebcal/core'
 import { ALIYA_LENGTHS, LEYNING } from './data/aliyaLengths'
 import DOMPurify from 'dompurify'
 import { initializeApp } from 'firebase/app'
@@ -35,33 +35,46 @@ let db
 try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }) }
 catch { try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() }) }) } catch { db = initializeFirestore(app, { localCache: memoryLocalCache() }) } }
 
-/* כל ההתקדמות נשמרת כמחרוזת JSON אחת בשדה 'mikra-progress' (פורמט קיים — לא לשנות,
-   הגרסה החיה קוראת אותו). כדי שמכשיר אחד לא ידרוס את השני, כל שינוי נשלח כפונקציה
-   ומוחל בתוך טרנזקציה על המצב העדכני בענן — לא על העותק המקומי שאולי ישן. */
-const PROG_FIELD = 'mikra-progress'
-const userDoc = uid => doc(db, 'users', uid)
-function parseProg(data) {
-  try { const r = data && data[PROG_FIELD]; return r ? JSON.parse(r) : {} } catch { return {} }
+/* ההתקדמות של כל שנה נשמרת כמחרוזת JSON בשדה משלה: 'mikra-progress-5787' וכו׳.
+   השדה הישן 'mikra-progress' (בלי שנה) הוא של תשפ״ו — השנה שבה האפליקציה נפתחה — ונשאר כמו שהוא.
+   כדי שמכשיר אחד לא ידרוס את השני, כל שינוי נשלח כפונקציה ומוחל בתוך טרנזקציה
+   על המצב העדכני בענן — לא על העותק המקומי שאולי ישן. */
+const LEGACY_YEAR = 5786
+const progField = year => year === LEGACY_YEAR ? 'mikra-progress' : `mikra-progress-${year}`
+/* השנים שיש להן שדה במסמך */
+function yearsIn(data) {
+  if (!data) return []
+  return Object.keys(data).map(k => k === 'mikra-progress' ? LEGACY_YEAR : (/^mikra-progress-(\d{4})$/.exec(k) || [])[1]).filter(Boolean).map(Number)
 }
-async function fbMutate(uid, mutate, localNext) {
+const userDoc = uid => doc(db, 'users', uid)
+function parseProg(data, year) {
+  try { const r = data && data[progField(year)]; return r ? JSON.parse(r) : {} } catch { return {} }
+}
+async function fbMutate(uid, year, mutate, localNext) {
+  const field = progField(year)
   try {
     await runTransaction(db, async tx => {
       const snap = await tx.get(userDoc(uid))
-      const next = mutate(parseProg(snap.exists() ? snap.data() : null))
-      tx.set(userDoc(uid), { [PROG_FIELD]: JSON.stringify(next) }, { merge: true })
+      const next = mutate(parseProg(snap.exists() ? snap.data() : null, year))
+      tx.set(userDoc(uid), { [field]: JSON.stringify(next) }, { merge: true })
     })
   } catch (e) {
     if (e && e.code === 'permission-denied') { console.error(e); return }
     // בלי רשת טרנזקציה נכשלת — כותבים את המצב המקומי, ו-Firestore ישלח כשיחזור חיבור
     // לא מחכים: בלי רשת ה-Promise נפתר רק כשהחיבור חוזר
-    setDoc(userDoc(uid), { [PROG_FIELD]: JSON.stringify(localNext) }, { merge: true }).catch(console.error)
+    setDoc(userDoc(uid), { [field]: JSON.stringify(localNext) }, { merge: true }).catch(console.error)
   }
 }
 
-const localKey = uid => `mikra-prog:${uid}`
-function loadLocal(uid) { try { const l = localStorage.getItem(localKey(uid)); return l ? JSON.parse(l) : null } catch { return null } }
-function saveLocal(uid, prog) { try { localStorage.setItem(localKey(uid), JSON.stringify(prog)) } catch {} }
-function clearLocal(uid) { try { localStorage.removeItem(localKey(uid)); localStorage.removeItem('mikra-prog') } catch {} }
+const localKey = (uid, year) => year === LEGACY_YEAR ? `mikra-prog:${uid}` : `mikra-prog:${uid}:${year}`
+function loadLocal(uid, year) { try { const l = localStorage.getItem(localKey(uid, year)); return l ? JSON.parse(l) : null } catch { return null } }
+function saveLocal(uid, year, prog) { try { localStorage.setItem(localKey(uid, year), JSON.stringify(prog)) } catch {} }
+function clearLocal(uid) {
+  try {
+    for (const k of Object.keys(localStorage)) if (k === `mikra-prog:${uid}` || k.startsWith(`mikra-prog:${uid}:`)) localStorage.removeItem(k)
+    localStorage.removeItem('mikra-prog')
+  } catch {}
+}
 function lsGet(k) { try { return localStorage.getItem(k) } catch { return null } }
 function lsSet(k, v) { try { localStorage.setItem(k, v) } catch {} }
 
@@ -105,7 +118,14 @@ const RING = {
 }
 
 /* ═══ HELPERS ════════════════════════════ */
-function getHebrewYear() { try { return new HDate(new Date()).getFullYear() } catch { return 5786 } }
+/* מחזור הקריאה מתחיל בבראשית, אחרי שמחת תורה — עד אז (נצבים, האזינו, וזאת הברכה) זו עדיין השנה הקודמת.
+   השנה נקראת לפי תשרי שבו המחזור מתחיל: בראשית של תשרי תשפ״ז → תשפ״ז */
+function getHebrewYear() {
+  try {
+    const d = new HDate(new Date()), y = d.getFullYear()
+    return d.getMonth() === months.TISHREI && d.getDate() <= (IN_ISRAEL ? 22 : 23) ? y - 1 : y
+  } catch { return 5787 }
+}
 function yearStr(y) { try { return gematriya(y % 1000) } catch { return String(y) } }
 
 const _EN2HE = {
@@ -965,6 +985,11 @@ function App() {
   const pendingSnap = useRef(null)  // עדכון מהענן שהגיע בזמן כתיבה — מוחל כשהיא מסתיימת
   const leaving = useRef(false)     // באמצע יציאה/מחיקה — לא לשמור עוד עדכונים מקומית
   const curYear = useRef(getHebrewYear()).current
+  const [year, setYear] = useState(curYear)      // השנה שמוצגת ומסומנת
+  const [years, setYears] = useState([])         // השנים שיש להן נתונים בענן
+  const yearRef = useRef(year)
+  yearRef.current = year
+  const isPast = year !== curYear
   const curParshiot = useRef(detectParasha()).current
   const { missing } = globalStats(prog)
 
@@ -1021,27 +1046,31 @@ function App() {
   const uid = user?.uid
   useEffect(() => {
     if (!uid) return
-    const local = loadLocal(uid)
-    if (local) { setAll(local); setLoading(false) }
+    pendingSnap.current = null
+    const local = loadLocal(uid, year)
+    setAll(local || {})
+    if (local) setLoading(false)
     return onSnapshot(userDoc(uid), snap => {
       setLoading(false)
       if (leaving.current || auth.currentUser?.uid !== uid || snap.metadata.hasPendingWrites) return
-      const r = parseProg(snap.exists() ? snap.data() : null)
+      const data = snap.exists() ? snap.data() : null
+      setYears(yearsIn(data))
+      const r = parseProg(data, year)
       if (inFlight.current > 0) { pendingSnap.current = r; return }
-      setAll(r); saveLocal(uid, r)
+      setAll(r); saveLocal(uid, year, r)
     }, e => {
       console.error(e)
       if (e.code === 'permission-denied') alert('⚠️ Firebase: אין הרשאה.')
       setLoading(false)
     })
-  }, [uid])
+  }, [uid, year])
 
   function doneOnboard() { lsSet('shmot-onboarded', '1'); setShowOnboard(false) }
 
   function doSignIn() {
     signInWithPopup(auth, provider).catch(e => { if (e.code === 'auth/popup-blocked') signInWithRedirect(auth, provider) })
   }
-  function closeAll() { setShowAccount(false); setSheet(null); setReadingView(null); setSelectedSefer(null) }
+  function closeAll() { setShowAccount(false); setSheet(null); setReadingView(null); setSelectedSefer(null); setYear(curYear) }
   async function doSignOut() {
     const id = uid
     closeAll()
@@ -1077,14 +1106,14 @@ function App() {
   /* כל שינוי: מוחל מקומית מיד, ונשלח לענן כפונקציה שמוחלת שם על המצב העדכני */
   function apply(mutate) {
     if (!uid || leaving.current) return
-    const id = uid
+    const id = uid, y = year
     const next = mutate(progRef.current)
-    setAll(next); saveLocal(id, next)
+    setAll(next); saveLocal(id, y, next)
     inFlight.current++
-    fbMutate(id, mutate, next).finally(() => {
+    fbMutate(id, y, mutate, next).finally(() => {
       if (--inFlight.current > 0 || !pendingSnap.current) return
       const r = pendingSnap.current; pendingSnap.current = null
-      if (auth.currentUser?.uid === id) { setAll(r); saveLocal(id, r) }
+      if (auth.currentUser?.uid === id && yearRef.current === y) { setAll(r); saveLocal(id, y, r) }
     })
   }
   const ensure = (n, parasha, num) => { if (!n[parasha]) n[parasha] = {}; if (num && !n[parasha][num]) n[parasha][num] = {} }
@@ -1154,7 +1183,10 @@ function App() {
           <div className="bar-tagline">שניים מקרא ואחד תרגום</div>
         </div>
         <div className="bar-end">
-          <span className="badge-year">{yearStr(curYear)}</span>
+          {/* בורר שנה — הסימונים של כל שנה נשמרים בנפרד; שנים קודמות נשארות לעיון ולהשלמה */}
+          <select className={`badge-year${isPast ? ' past' : ''}`} aria-label="שנת הלימוד" value={year} onChange={e => { setSheet(null); setYear(Number(e.target.value)) }}>
+            {[...new Set([curYear, ...years])].sort((a, b) => b - a).map(y => <option key={y} value={y}>{yearStr(y)}</option>)}
+          </select>
           <motion.button className={`btn-missing${filterMissing ? ' on' : ''}`} aria-pressed={filterMissing} aria-label={`${missing} פרשות עם חוסרים — הצג רק אותן`} onClick={() => setFilterMissing(v => !v)} whileTap={{ scale: 0.93 }}>⚠ {missing}</motion.button>
           <a className="btn-contact" href="https://forms.gle/QVmpXvtWo9TtJGk9A" target="_blank" rel="noopener">✉ צור קשר</a>
           <div className="acct-wrap">
@@ -1186,15 +1218,27 @@ function App() {
                 </motion.div>
               )}
             </AnimatePresence>
+            {isPast && (
+              <div className="year-notice">
+                <span>מציג את שנת {yearStr(year)}</span>
+                <button onClick={() => setYear(curYear)}>חזרה ל{yearStr(curYear)} ‹</button>
+              </div>
+            )}
+            {!isPast && years.some(y => y < curYear) && !Object.keys(prog).length && (
+              <div className="year-notice new">
+                <span>שנה טובה! מתחילים מחדש ב{yearStr(curYear)}. הסימונים של {yearStr(Math.max(...years.filter(y => y < curYear)))} שמורים — בוחרים את השנה למעלה</span>
+              </div>
+            )}
             <ConceptCard />
             {(() => {
-              const weekNames = curParshiot ? (curParshiot.length > 1 ? [curParshiot.join(JOIN), ...curParshiot] : curParshiot) : []
+              const week = isPast ? null : curParshiot   // פרשת השבוע שייכת לשנה הנוכחית
+              const weekNames = week ? (week.length > 1 ? [week.join(JOIN), ...week] : week) : []
               const resumeP = weekNames.find(p => resumeKey(prog[p])) || Object.keys(prog).find(p => resumeKey(prog[p]))
-              const showRow = curParshiot || resumeP
+              const showRow = week || resumeP
               if (!showRow) return null
               return (
                 <div className="quick-row">
-                  {curParshiot && <WeekCard parshiot={curParshiot} onOpen={openReadingView} />}
+                  {week && <WeekCard parshiot={week} onOpen={openReadingView} />}
                   {resumeP && <ResumeCard parasha={resumeP} prog={prog} onOpen={openReadingView} />}
                 </div>
               )
@@ -1206,7 +1250,7 @@ function App() {
             </div>
           </motion.div>
         ) : (
-          <ParshotView key={selectedSefer.id} sefer={selectedSefer} prog={prog} currentParshiot={curParshiot} filterMissing={filterMissing}
+          <ParshotView key={selectedSefer.id} sefer={selectedSefer} prog={prog} currentParshiot={isPast ? null : curParshiot} filterMissing={filterMissing}
             onOpen={(name, theme, seferId) => openReadingView(name, seferId, theme)}
             onOpenSheet={(name, theme, seferId) => setSheet({ name, theme, seferId })}
             onBack={() => setSelectedSefer(null)} />

@@ -3,7 +3,7 @@
    • /assets/*: קבצים עם hash בשם — לא משתנים לעולם, אז מטמון קודם
    • טקסט מספריא וגופנים: מהמטמון מיד, ומתעדכן ברקע (stale-while-revalidate)
    • כל השאר (Firebase, התחברות) — לא נוגעים */
-const VERSION = 'v24';
+const VERSION = 'v25';
 const SHELL = `shmot-shell-${VERSION}`;
 const RUNTIME = 'shmot-runtime';        // נכסים/גופנים/ספריא — לא נמחק בכל גרסה
 const STATIC = ['/', '/manifest.json', '/icon.svg', '/icon-192.png', '/icon-512.png'];
