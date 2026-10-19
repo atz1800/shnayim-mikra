@@ -118,12 +118,12 @@ const RING = {
 }
 
 /* ═══ HELPERS ════════════════════════════ */
-/* מחזור הקריאה מתחיל בבראשית, אחרי שמחת תורה — עד אז (נצבים, האזינו, וזאת הברכה) זו עדיין השנה הקודמת.
+/* שנת לימוד: משמחת תורה עד שמחת תורה (בארץ כ״ב בתשרי, בחו״ל כ״ג) — עד אז (נצבים, האזינו, וזאת הברכה) זו עדיין השנה הקודמת.
    השנה נקראת לפי תשרי שבו המחזור מתחיל: בראשית של תשרי תשפ״ז → תשפ״ז */
 function getHebrewYear() {
   try {
     const d = new HDate(new Date()), y = d.getFullYear()
-    return d.getMonth() === months.TISHREI && d.getDate() <= (IN_ISRAEL ? 22 : 23) ? y - 1 : y
+    return d.getMonth() === months.TISHREI && d.getDate() < (IN_ISRAEL ? 22 : 23) ? y - 1 : y
   } catch { return 5787 }
 }
 function yearStr(y) { try { return gematriya(y % 1000) } catch { return String(y) } }
