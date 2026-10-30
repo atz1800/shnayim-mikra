@@ -1,0 +1,32 @@
+# העלאה אוטומטית ל-Firebase Hosting בכל מיזוג ל-main, כדי שהאתר החי לא יפגר אחרי הקוד.
+# דורש סוד בשם FIREBASE_SERVICE_ACCOUNT (מפתח JSON של service account בפרויקט shnayim-mikra-app).
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hosting
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+      - run: npm run build
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: shnayim-mikra-app
+          channelId: live

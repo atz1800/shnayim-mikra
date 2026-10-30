@@ -31,6 +31,15 @@ npx firebase-tools deploy --only hosting
 
 `deploy` מריץ `npm run build` לבד. הגרסה שבאתר החי צריכה להיות זהה ל־`main` ב־GitHub.
 
+### פריסה אוטומטית
+
+`.github/workflows/deploy.yml` בונה ומעלה את האתר בכל מיזוג ל־`main` (ואפשר גם ידנית: Actions → Deploy to Firebase Hosting → Run workflow).
+הגדרה חד־פעמית:
+
+1. https://console.firebase.google.com/project/shnayim-mikra-app/settings/serviceaccounts/adminsdk → **Generate new private key** (מוריד קובץ JSON).
+2. ב־GitHub: Settings → Secrets and variables → Actions → **New repository secret**, שם `FIREBASE_SERVICE_ACCOUNT`, ובתוכן — כל קובץ ה־JSON.
+3. למחוק את קובץ ה־JSON מהמחשב.
+
 כתובת: https://shnayim-mikra-app.web.app
 
 ## שחזור אחרי פריסה שגויה
